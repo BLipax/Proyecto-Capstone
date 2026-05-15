@@ -1,0 +1,1 @@
+{"version":3,"sources":["useAuth.js"],"names":["useAuth","AuthContext"],"mappings":";;;;;;;AAAA;;AACA;;AAEO,SAASA,OAAT,GAAmB;AACxB,SAAO,uBAAWC,wBAAX,CAAP;AACD","sourcesContent":["import { useContext } from 'react'\r\nimport { AuthContext } from './AuthContext'\r\n\r\nexport function useAuth() {\r\n  return useContext(AuthContext)\r\n}"],"file":"useAuth.dev.js"}
