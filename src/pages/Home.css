@@ -1,0 +1,192 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #f5f7fb;
+  color: #1f2937;
+  font-family: system-ui, sans-serif;
+  padding: 0;
+  margin: 0;
+}
+
+.banner {
+  width: 100%;
+  padding: 80px 24px;
+  min-height: 500px;
+  background: linear-gradient(135deg, rgba(37,99,235,0.4) 0%, rgba(79,70,229,0.4) 100%), url('../assets/foodBanner.jpg') center/cover no-repeat;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  color: #ffffff;
+  box-sizing: border-box;
+}
+
+.banner-content {
+  max-width: 960px;
+}
+
+.banner-title {
+  font-size: 3rem;
+  margin: 0 0 16px;
+  line-height: 1.1;
+}
+
+.banner-text {
+  font-size: 1.1rem;
+  margin: 0 auto 24px;
+  max-width: 680px;
+}
+
+.banner-button {
+  padding: 14px 28px;
+  font-size: 1rem;
+  color: #ffffff;
+  background-color: #0ea5e9;
+  border: none;
+  border-radius: 9999px;
+  cursor: pointer;
+}
+
+.card-section {
+  width: 100%;
+  max-width: 1200px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px;
+  padding: 48px 24px 80px;
+  box-sizing: border-box;
+}
+
+.card {
+  background-color: #ffffff;
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.card-img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
+
+.card-title {
+  font-size: 1.5rem;
+  margin: 0 0 12px;
+  color: #111827;
+}
+
+.card-text {
+  font-size: 1rem;
+  line-height: 1.7;
+  margin: 0;
+  color: #1f2937;
+}
+
+.card-precio {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #2563eb;
+  margin: 8px 0;
+}
+
+.card-buttons { 
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.btn-info {
+  flex: 1;
+  padding: 10px;
+  font-size: 0.9rem;
+  background-color: transparent;
+  color: #2563eb;
+  border: 2px solid #2563eb;
+  border-radius: 9999px;
+  cursor: pointer;
+}
+
+.btn-reservar {
+  flex: 1;
+  padding: 10px;
+  font-size: 0.9rem;
+  background-color: #2563eb;
+  color: #ffffff;
+  border: none;
+  border-radius: 9999px;
+  cursor: pointer;
+}
+
+/*.carousel-wrapper {
+  width: 100%;
+  max-width: 1200px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 24px 80px;
+  box-sizing: border-box;
+}
+*/
+.carousel-wrapper {
+  width: 100%;
+  max-width: 1200px;
+  position: relative;
+  padding: 48px 0 80px;
+  box-sizing: border-box;
+}
+
+.carousel {
+  display: flex;
+  gap: 24px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding: 8px 60px;
+  scrollbar-width: none;
+  box-sizing: border-box;
+}
+
+.carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.carousel .card {
+  min-width: 280px;
+  max-width: 280px;
+  flex-shrink: 0;
+}
+
+.carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: #1e3a5f;
+  color: #ffffff;
+  border: none;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  z-index: 10;
+  transition: background-color 0.2s;
+}
+
+.carousel-btn.left {
+  left: 8px;
+}
+
+.carousel-btn.right {
+  right: 8px;
+}
+
+.carousel-btn:hover {
+  background-color: #0f1f33;
+}
