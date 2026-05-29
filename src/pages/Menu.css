@@ -1,0 +1,201 @@
+.menu-page {
+  min-height: 100vh;
+  background-color: #f5f7fb;
+  font-family: system-ui, sans-serif;
+}
+
+.menu-banner {
+  width: 100%;
+  min-height: 320px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(37, 99, 235, 0.75) 0%,
+      rgba(79, 70, 229, 0.75) 100%
+    ),
+    url('../assets/foodBanner.jpg') center/cover no-repeat;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  text-align: center;
+  color: white;
+
+  padding: 48px 24px;
+  box-sizing: border-box;
+}
+
+.menu-banner-content {
+  max-width: 800px;
+}
+
+.menu-title {
+  font-size: 3rem;
+  margin-bottom: 12px;
+}
+
+.menu-subtitle {
+  font-size: 1.1rem;
+  line-height: 1.7;
+  opacity: 0.95;
+}
+
+.menu-container {
+  width: 100%;
+  max-width: 1300px;
+
+  margin: 0 auto;
+  padding: 48px 24px 80px;
+
+  box-sizing: border-box;
+}
+
+.menu-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(auto-fit, minmax(280px, 1fr));
+
+  gap: 28px;
+}
+
+.menu-card {
+  background-color: white;
+
+  border-radius: 24px;
+
+  overflow: hidden;
+
+  box-shadow:
+    0 20px 40px rgba(15, 23, 42, 0.08);
+
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-card:hover {
+  transform: translateY(-4px);
+
+  box-shadow:
+    0 24px 48px rgba(15, 23, 42, 0.12);
+}
+
+.menu-card-img {
+  width: 100%;
+  height: 220px;
+
+  object-fit: cover;
+}
+
+.menu-card-content {
+  padding: 24px;
+
+  display: flex;
+  flex-direction: column;
+
+  justify-content: space-between;
+
+  flex: 1;
+}
+
+.menu-card-title {
+  font-size: 1.4rem;
+  color: #111827;
+
+  margin-bottom: 6px;
+}
+
+.menu-card-category {
+  font-size: 0.85rem;
+  font-weight: 600;
+
+  color: #2563eb;
+
+  margin-bottom: 12px;
+
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.menu-card-text {
+  font-size: 0.95rem;
+  line-height: 1.7;
+
+  color: #4b5563;
+
+  margin-bottom: 24px;
+}
+
+.menu-card-footer {
+  display: flex;
+
+  justify-content: space-between;
+  align-items: center;
+
+  gap: 12px;
+}
+
+.menu-card-price {
+  font-size: 1.3rem;
+  font-weight: 700;
+
+  color: #2563eb;
+}
+
+.menu-btn {
+  border: none;
+
+  background-color: #2563eb;
+  color: white;
+
+  padding: 12px 18px;
+
+  border-radius: 9999px;
+
+  font-size: 0.95rem;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: background-color 0.2s;
+}
+
+.menu-btn:hover {
+  background-color: #1d4ed8;
+}
+
+.menu-loading,
+.menu-empty {
+  text-align: center;
+
+  color: #6b7280;
+
+  font-size: 1rem;
+
+  padding: 48px 0;
+}
+
+@media (max-width: 768px) {
+  .menu-title {
+    font-size: 2.2rem;
+  }
+
+  .menu-card-img {
+    height: 200px;
+  }
+
+  .menu-card-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .menu-btn {
+    width: 100%;
+  }
+}
