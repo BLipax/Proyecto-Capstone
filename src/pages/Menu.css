@@ -11,8 +11,8 @@
   background:
     linear-gradient(
       135deg,
-      rgba(37, 99, 235, 0.75) 0%,
-      rgba(79, 70, 229, 0.75) 100%
+      rgba(37, 99, 235, 0.2) 0%,
+      rgba(79, 70, 229, 0.2) 100%
     ),
     url('../assets/foodBanner.jpg') center/cover no-repeat;
 
