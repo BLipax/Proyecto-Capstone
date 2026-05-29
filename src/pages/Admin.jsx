@@ -7,9 +7,10 @@ const Admin = () => {
     descripcion: '',
     precio: '',
     categoria: '',
-    imagen_url: '',
     disponible: 'S',
   })
+
+  const [file, setFile] = useState(null)
   const [loading, setLoading] = useState(false)
   const [mensaje, setMensaje] = useState(null)
 
@@ -17,22 +18,79 @@ const Admin = () => {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
+  const handleFileChange = (e) => {
+    setFile(e.target.files[0])
+  }
+
   const handleSubmit = async () => {
     if (!form.nombre || !form.precio) {
-      setMensaje({ tipo: 'error', texto: 'Nombre y precio son obligatorios.' })
+      setMensaje({
+        tipo: 'error',
+        texto: 'Nombre y precio son obligatorios.',
+      })
       return
     }
+
     setLoading(true)
-    const { error } = await supabase.from('platos').insert([{
-      ...form,
-      precio: parseFloat(form.precio),
-    }])
+    setMensaje(null)
+
+    let imageUrl = ''
+
+    // SUBIR IMAGEN
+    if (file) {
+      const fileName = `${Date.now()}-${file.name}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('platos')
+        .upload(fileName, file)
+
+      if (uploadError) {
+        setMensaje({
+          tipo: 'error',
+          texto: 'Error al subir imagen: ' + uploadError.message,
+        })
+        setLoading(false)
+        return
+      }
+
+      const { data } = supabase.storage
+        .from('platos')
+        .getPublicUrl(fileName)
+
+      imageUrl = data.publicUrl
+    }
+
+    // GUARDAR PLATO
+    const { error } = await supabase.from('platos').insert([
+      {
+        ...form,
+        precio: parseFloat(form.precio),
+        imagen_url: imageUrl,
+      },
+    ])
+
     setLoading(false)
+
     if (error) {
-      setMensaje({ tipo: 'error', texto: 'Error al guardar: ' + error.message })
+      setMensaje({
+        tipo: 'error',
+        texto: 'Error al guardar: ' + error.message,
+      })
     } else {
-      setMensaje({ tipo: 'exito', texto: '¡Plato agregado correctamente!' })
-      setForm({ nombre: '', descripcion: '', precio: '', categoria: '', imagen_url: '', disponible: 'S' })
+      setMensaje({
+        tipo: 'exito',
+        texto: '¡Plato agregado correctamente!',
+      })
+
+      setForm({
+        nombre: '',
+        descripcion: '',
+        precio: '',
+        categoria: '',
+        disponible: 'S',
+      })
+
+      setFile(null)
     }
   }
 
@@ -44,33 +102,65 @@ const Admin = () => {
 
         <div style={styles.field}>
           <label style={styles.label}>Nombre *</label>
-          <input style={styles.input} name="nombre" value={form.nombre} onChange={handleChange} placeholder="Ej: Ensalada mediterránea" />
+          <input
+            style={styles.input}
+            name="nombre"
+            value={form.nombre}
+            onChange={handleChange}
+            placeholder="Ej: Ensalada mediterránea"
+          />
         </div>
 
         <div style={styles.field}>
           <label style={styles.label}>Descripción</label>
-          <textarea style={styles.textarea} name="descripcion" value={form.descripcion} onChange={handleChange} placeholder="Descripción breve del plato" />
+          <textarea
+            style={styles.textarea}
+            name="descripcion"
+            value={form.descripcion}
+            onChange={handleChange}
+            placeholder="Descripción breve del plato"
+          />
         </div>
 
         <div style={styles.row}>
           <div style={{ ...styles.field, flex: 1 }}>
             <label style={styles.label}>Precio *</label>
-            <input style={styles.input} name="precio" type="number" value={form.precio} onChange={handleChange} placeholder="Ej: 4990" />
+            <input
+              style={styles.input}
+              name="precio"
+              type="number"
+              value={form.precio}
+              onChange={handleChange}
+              placeholder="Ej: 4990"
+            />
           </div>
+
           <div style={{ ...styles.field, flex: 1 }}>
             <label style={styles.label}>Categoría</label>
-            <input style={styles.input} name="categoria" value={form.categoria} onChange={handleChange} placeholder="Ej: Ensaladas" />
+            <input
+              style={styles.input}
+              name="categoria"
+              value={form.categoria}
+              onChange={handleChange}
+              placeholder="Ej: Ensaladas"
+            />
           </div>
         </div>
 
         <div style={styles.field}>
-          <label style={styles.label}>URL de imagen</label>
-          <input style={styles.input} name="imagen_url" value={form.imagen_url} onChange={handleChange} placeholder="https://..." />
+          <label style={styles.label}>Imagen del plato</label>
+          <input type="file" accept="image/*" onChange={handleFileChange} />
         </div>
 
         <div style={styles.field}>
           <label style={styles.label}>Disponible</label>
-          <select style={styles.input} name="disponible" value={form.disponible} onChange={handleChange}>
+
+          <select
+            style={styles.input}
+            name="disponible"
+            value={form.disponible}
+            onChange={handleChange}
+          >
             <option value="S">Sí</option>
             <option value="N">No</option>
           </select>
@@ -82,7 +172,11 @@ const Admin = () => {
           </p>
         )}
 
-        <button style={styles.button} onClick={handleSubmit} disabled={loading}>
+        <button
+          style={styles.button}
+          onClick={handleSubmit}
+          disabled={loading}
+        >
           {loading ? 'Guardando...' : 'Agregar plato'}
         </button>
       </div>

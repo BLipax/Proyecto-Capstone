@@ -24,17 +24,17 @@ const Home = () => {
    const scrollLeft = () => {
     carouselRef.current.scrollBy({ left: -320, behavior: 'smooth' })
   }
-
+    
   const scrollRight = () => {
     carouselRef.current.scrollBy({ left: 320, behavior: 'smooth' })
   }
 
-    return (
+ return (
     <div className="page">
       <Navbar />
       <section className="banner">
         <div className="banner-content">
-          <h1 className="banner-title">Bienvenido al Casino</h1>
+          <h1 className="banner-title">Bienvenido al Casino DUCO</h1>
           <p className="banner-text">Reserva tu almuerzo de forma rápida y sin filas.</p>
           <button className="banner-button">Ver menú</button>
         </div>
