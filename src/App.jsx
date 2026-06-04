@@ -5,6 +5,7 @@ import Registro from './pages/Registro'
 import Login from './pages/Login'
 import Reservas from './pages/Reservas'
 import Menu from './pages/Menu'
+import Chatbot from './components/Chatbot'
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/reservas" element={<Reservas />} />
         <Route path="/menu" element={<Menu />} />
       </Routes>
+      <Chatbot />
     </BrowserRouter>
   )
 }
