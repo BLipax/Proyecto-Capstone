@@ -85,6 +85,7 @@
   color: #1f2937;
   align-self: flex-start;
   border-bottom-left-radius: 4px;
+  text-align: left;
 }
 
 .chatbot-msg.user {
