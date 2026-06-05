@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../services/supabaseClient'
 
-const Admin = () => {
+export default function Admin() {
   const [form, setForm] = useState({
     nombre: '',
     descripcion: '',
@@ -36,7 +36,6 @@ const Admin = () => {
 
     let imageUrl = ''
 
-    // SUBIR IMAGEN
     if (file) {
       const fileName = `${Date.now()}-${file.name}`
 
@@ -47,7 +46,7 @@ const Admin = () => {
       if (uploadError) {
         setMensaje({
           tipo: 'error',
-          texto: 'Error al subir imagen: ' + uploadError.message,
+          texto: uploadError.message,
         })
         setLoading(false)
         return
@@ -60,7 +59,6 @@ const Admin = () => {
       imageUrl = data.publicUrl
     }
 
-    // GUARDAR PLATO
     const { error } = await supabase.from('platos').insert([
       {
         ...form,
@@ -74,11 +72,11 @@ const Admin = () => {
     if (error) {
       setMensaje({
         tipo: 'error',
-        texto: 'Error al guardar: ' + error.message,
+        texto: error.message,
       })
     } else {
       setMensaje({
-        tipo: 'exito',
+        tipo: 'success',
         texto: '¡Plato agregado correctamente!',
       })
 
@@ -95,189 +93,299 @@ const Admin = () => {
   }
 
   return (
-    <div style={styles.page}>
-      <div style={styles.card}>
-        <h1 style={styles.title}>Panel Admin</h1>
-        <h2 style={styles.subtitle}>Agregar nuevo plato</h2>
+    <div style={styles.layout}>
+      {/* Sidebar */}
+      <aside style={styles.sidebar}>
+        <div style={styles.logo}>
+          <div style={styles.logoIcon}>🍽️</div>
 
-        <div style={styles.field}>
-          <label style={styles.label}>Nombre *</label>
-          <input
-            style={styles.input}
-            name="nombre"
-            value={form.nombre}
-            onChange={handleChange}
-            placeholder="Ej: Ensalada mediterránea"
-          />
-        </div>
-
-        <div style={styles.field}>
-          <label style={styles.label}>Descripción</label>
-          <textarea
-            style={styles.textarea}
-            name="descripcion"
-            value={form.descripcion}
-            onChange={handleChange}
-            placeholder="Descripción breve del plato"
-          />
-        </div>
-
-        <div style={styles.row}>
-          <div style={{ ...styles.field, flex: 1 }}>
-            <label style={styles.label}>Precio *</label>
-            <input
-              style={styles.input}
-              name="precio"
-              type="number"
-              value={form.precio}
-              onChange={handleChange}
-              placeholder="Ej: 4990"
-            />
-          </div>
-
-          <div style={{ ...styles.field, flex: 1 }}>
-            <label style={styles.label}>Categoría</label>
-            <input
-              style={styles.input}
-              name="categoria"
-              value={form.categoria}
-              onChange={handleChange}
-              placeholder="Ej: Ensaladas"
-            />
+          <div>
+            <div style={styles.logoTitle}>Restaurant Admin</div>
+            <div style={styles.logoSub}>v1.0</div>
           </div>
         </div>
 
-        <div style={styles.field}>
-          <label style={styles.label}>Imagen del plato</label>
-          <input type="file" accept="image/*" onChange={handleFileChange} />
-        </div>
+        <nav>
+          <div style={styles.navItemActive}>Dashboard</div>
+          <div style={styles.navItem}>Platos</div>
+          <div style={styles.navItem}>Categorías</div>
+          <div style={styles.navItem}>Pedidos</div>
+          <div style={styles.navItem}>Clientes</div>
+        </nav>
+      </aside>
 
-        <div style={styles.field}>
-          <label style={styles.label}>Disponible</label>
+      {/* Main */}
+      <div style={styles.main}>
+        <header style={styles.topbar}>
+          <h1 style={{ margin: 0 }}>Agregar Plato</h1>
+        </header>
 
-          <select
-            style={styles.input}
-            name="disponible"
-            value={form.disponible}
-            onChange={handleChange}
-          >
-            <option value="S">Sí</option>
-            <option value="N">No</option>
-          </select>
-        </div>
+        <main style={styles.content}>
+          <div style={styles.statsGrid}>
+            <div style={styles.statCard}>
+              <div style={styles.statValue}>124</div>
+              <div style={styles.statLabel}>Platos</div>
+            </div>
 
-        {mensaje && (
-          <p style={mensaje.tipo === 'exito' ? styles.exito : styles.error}>
-            {mensaje.texto}
-          </p>
-        )}
+            <div style={styles.statCard}>
+              <div style={styles.statValue}>15</div>
+              <div style={styles.statLabel}>Categorías</div>
+            </div>
 
-        <button
-          style={styles.button}
-          onClick={handleSubmit}
-          disabled={loading}
-        >
-          {loading ? 'Guardando...' : 'Agregar plato'}
-        </button>
+            <div style={styles.statCard}>
+              <div style={styles.statValue}>93</div>
+              <div style={styles.statLabel}>Disponibles</div>
+            </div>
+
+            <div style={styles.statCard}>
+              <div style={styles.statValue}>31</div>
+              <div style={styles.statLabel}>Ocultos</div>
+            </div>
+          </div>
+
+          <div style={styles.panel}>
+            <h2 style={styles.panelTitle}>Nuevo Plato</h2>
+
+            <div style={styles.field}>
+              <label>Nombre *</label>
+
+              <input
+                style={styles.input}
+                name="nombre"
+                value={form.nombre}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div style={styles.field}>
+              <label>Descripción</label>
+
+              <textarea
+                style={styles.textarea}
+                name="descripcion"
+                value={form.descripcion}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div style={styles.row}>
+              <div style={{ flex: 1 }}>
+                <label>Precio *</label>
+
+                <input
+                  style={styles.input}
+                  type="number"
+                  name="precio"
+                  value={form.precio}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div style={{ flex: 1 }}>
+                <label>Categoría</label>
+
+                <input
+                  style={styles.input}
+                  name="categoria"
+                  value={form.categoria}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+
+            <div style={styles.field}>
+              <label>Imagen</label>
+
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+              />
+            </div>
+
+            <div style={styles.field}>
+              <label>Disponible</label>
+
+              <select
+                style={styles.input}
+                name="disponible"
+                value={form.disponible}
+                onChange={handleChange}
+              >
+                <option value="S">Sí</option>
+                <option value="N">No</option>
+              </select>
+            </div>
+
+            {mensaje && (
+              <div
+                style={
+                  mensaje.tipo === 'success'
+                    ? styles.success
+                    : styles.error
+                }
+              >
+                {mensaje.texto}
+              </div>
+            )}
+
+            <button
+              style={styles.button}
+              disabled={loading}
+              onClick={handleSubmit}
+            >
+              {loading ? 'Guardando...' : 'Agregar Plato'}
+            </button>
+          </div>
+        </main>
       </div>
     </div>
   )
 }
 
 const styles = {
-  page: {
-    minHeight: '100vh',
-    backgroundColor: '#f5f7fb',
+  layout: {
     display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'flex-start',
-    padding: '48px 24px',
-    fontFamily: 'system-ui, sans-serif',
+    minHeight: '100vh',
+    background: '#1a1d23',
+    color: '#e2e8f0',
+    fontFamily: "'Segoe UI', system-ui, sans-serif",
   },
-  card: {
-    backgroundColor: '#ffffff',
-    borderRadius: '20px',
-    padding: '36px',
-    width: '100%',
-    maxWidth: '600px',
-    boxShadow: '0 20px 40px rgba(15,23,42,0.08)',
+
+  sidebar: {
+    width: 220,
+    background: '#1e2128',
+    borderRight: '0.5px solid rgba(255,255,255,0.07)',
+    display: 'flex',
+    flexDirection: 'column',
+    padding: 0,
   },
-  title: {
-    fontSize: '1.8rem',
-    margin: '0 0 4px',
-    color: '#1f2937',
+
+  main: {
+    flex: 1,
+    background: '#1a1d23',
   },
-  subtitle: {
-    fontSize: '1rem',
-    fontWeight: '400',
-    color: '#6b7280',
-    margin: '0 0 28px',
+
+  topbar: {
+    height: 52,
+    background: '#1e2128',
+    borderBottom: '0.5px solid rgba(255,255,255,0.07)',
+    display: 'flex',
+    alignItems: 'center',
+    padding: '0 20px',
   },
+
+  content: {
+    padding: 20,
+  },
+
+  statsGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(4,1fr)',
+    gap: 12,
+    marginBottom: 20,
+  },
+
+  statCard: {
+    background: '#1e2128',
+    border: '0.5px solid rgba(255,255,255,0.07)',
+    borderRadius: 10,
+    padding: 16,
+  },
+
+  statValue: {
+    fontSize: 24,
+    fontWeight: 600,
+    color: '#e2e8f0',
+  },
+
+  statLabel: {
+    color: '#475569',
+    fontSize: 12,
+  },
+
+  panel: {
+    background: '#1e2128',
+    border: '0.5px solid rgba(255,255,255,0.07)',
+    borderRadius: 10,
+    padding: 24,
+  },
+
+  panelTitle: {
+    color: '#e2e8f0',
+    fontSize: 15,
+    fontWeight: 600,
+    marginBottom: 20,
+  },
+
   field: {
     display: 'flex',
     flexDirection: 'column',
-    marginBottom: '16px',
+    marginBottom: 16,
   },
-  row: {
-    display: 'flex',
-    gap: '16px',
-  },
-  label: {
-    fontSize: '0.85rem',
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: '6px',
-  },
+
   input: {
-    padding: '10px 14px',
-    fontSize: '0.95rem',
-    border: '1.5px solid #e5e7eb',
-    borderRadius: '10px',
+    background: 'rgba(255,255,255,0.05)',
+    border: '0.5px solid rgba(255,255,255,0.08)',
+    borderRadius: 8,
+    padding: '10px 12px',
+    color: '#e2e8f0',
     outline: 'none',
-    color: '#1f2937',
-    backgroundColor: '#f9fafb',
+    fontSize: 13,
   },
+
   textarea: {
-    padding: '10px 14px',
-    fontSize: '0.95rem',
-    border: '1.5px solid #e5e7eb',
-    borderRadius: '10px',
-    outline: 'none',
-    color: '#1f2937',
-    backgroundColor: '#f9fafb',
-    minHeight: '80px',
+    background: 'rgba(255,255,255,0.05)',
+    border: '0.5px solid rgba(255,255,255,0.08)',
+    borderRadius: 8,
+    padding: '10px 12px',
+    color: '#e2e8f0',
+    minHeight: 100,
     resize: 'vertical',
-    fontFamily: 'system-ui, sans-serif',
+    outline: 'none',
+    fontSize: 13,
   },
+
   button: {
-    width: '100%',
-    padding: '14px',
-    fontSize: '1rem',
-    fontWeight: '600',
-    backgroundColor: '#2563eb',
-    color: '#ffffff',
+    background: '#3b82f6',
+    color: '#fff',
     border: 'none',
-    borderRadius: '9999px',
+    borderRadius: 8,
+    padding: '12px 16px',
+    fontWeight: 600,
     cursor: 'pointer',
-    marginTop: '8px',
   },
-  exito: {
-    color: '#15803d',
-    backgroundColor: '#f0fdf4',
-    border: '1px solid #bbf7d0',
-    borderRadius: '10px',
-    padding: '10px 14px',
-    fontSize: '0.9rem',
-    marginBottom: '12px',
+
+  navItem: {
+    color: '#94a3b8',
+    padding: '8px 10px',
+    margin: '2px 10px',
+    borderRadius: 7,
   },
+
+  navItemActive: {
+    color: '#60a5fa',
+    background: 'rgba(59,130,246,0.15)',
+    padding: '8px 10px',
+    margin: '2px 10px',
+    borderRadius: 7,
+  },
+
+  success: {
+    background: 'rgba(34,197,94,0.12)',
+    color: '#4ade80',
+    border: '1px solid rgba(34,197,94,0.15)',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+  },
+
   error: {
-    color: '#dc2626',
-    backgroundColor: '#fef2f2',
-    border: '1px solid #fecaca',
-    borderRadius: '10px',
-    padding: '10px 14px',
-    fontSize: '0.9rem',
-    marginBottom: '12px',
+    background: 'rgba(239,68,68,0.10)',
+    color: '#f87171',
+    border: '1px solid rgba(239,68,68,0.15)',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
   },
 }
-export default Admin
