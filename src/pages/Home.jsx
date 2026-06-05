@@ -52,7 +52,6 @@ const Home = () => {
               <p className="card-text">{plato.descripcion}</p>
               <p className="card-precio">${plato.precio}</p>
               <div className="card-buttons">
-                <button className="btn-info">Más info</button>
                 <button className="btn-reservar" onClick={() => navigate('/reservas')}>Reservar</button>
               </div>
             </div>
