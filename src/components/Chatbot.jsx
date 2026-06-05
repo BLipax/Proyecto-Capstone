@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { supabase } from '../services/supabaseClient'
 import './Chatbot.css'
 
 const SYSTEM_PROMPT = `Eres un asistente virtual del Casino de Duoc UC. 
@@ -62,7 +63,19 @@ const Chatbot = () => {
     setLoading(true)
 
     try {
-      const response = await fetch('https://models.inference.ai.azure.com/chat/completions', {
+       // Obtener menú disponible desde Supabase
+    const { data: platos } = await supabase
+      .from('platos')
+      .select('nombre, descripcion, precio, etiquetas')
+      .eq('disponible', 'S')
+
+    const menuHoy = platos?.length > 0
+      ? platos.map(p => `- ${p.nombre}: $${p.precio}${p.descripcion ? ` — ${p.descripcion}` : ''}`).join('\n')
+      : 'No hay platos disponibles en este momento.'
+
+    const systemConMenu = `${SYSTEM_PROMPT}\n\nMENÚ DISPONIBLE HOY:\n${menuHoy}`
+
+    const response = await fetch('https://models.inference.ai.azure.com/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -71,7 +84,7 @@ const Chatbot = () => {
         body: JSON.stringify({
           model: 'gpt-4o-mini',
           messages: [
-            { role: 'system', content: SYSTEM_PROMPT },
+            { role: 'system', content: systemConMenu },
             ...nuevosMensajes.map(m => ({
               role: m.rol,
               content: m.texto
