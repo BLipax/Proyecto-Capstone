@@ -22,7 +22,9 @@ const Navbar = () => {
         <Link to="/home" className={location.pathname === '/home' ? 'nav-link active' : 'nav-link'}>Inicio</Link>
         <Link to="/menu" className={location.pathname === '/menu' ? 'nav-link active' : 'nav-link'}>Menú</Link>
         <Link to="/reservas" className={location.pathname === '/reservas' ? 'nav-link active' : 'nav-link'}>Reservas</Link>
-
+        <Link to="/resenas" className={location.pathname === '/resenas' ? 'nav-link active' : 'nav-link'}>Reseñas</Link>
+      </div>
+      <div className="navbar-user"> 
         {user ? (
           <div className="nav-user-wrapper">
             <button className="nav-btn" onClick={() => setMenuAbierto(!menuAbierto)}>

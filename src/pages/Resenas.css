@@ -1,0 +1,173 @@
+.resenas-page {
+  min-height: 100vh;
+  background-color: #f5f7fb;
+  font-family: system-ui, sans-serif;
+}
+
+.resenas-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.resenas-title {
+  font-size: 1.4rem;
+  color: #1e3a5f;
+  margin: 0 0 20px;
+}
+
+.resenas-form-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+}
+
+.resenas-field {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16px;
+}
+
+.resenas-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 6px;
+}
+
+.resenas-input {
+  padding: 10px 14px;
+  font-size: 0.95rem;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  outline: none;
+  color: #1f2937;
+  background-color: #f9fafb;
+  transition: border-color 0.2s;
+}
+
+.resenas-input:focus {
+  border-color: #2563eb;
+}
+
+.resenas-textarea {
+  padding: 10px 14px;
+  font-size: 0.95rem;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  outline: none;
+  color: #1f2937;
+  background-color: #f9fafb;
+  resize: vertical;
+  font-family: system-ui, sans-serif;
+  transition: border-color 0.2s;
+}
+
+.resenas-textarea:focus {
+  border-color: #2563eb;
+}
+
+.resenas-btn {
+  width: 100%;
+  padding: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  background-color: #1e3a5f;
+  color: #ffffff;
+  border: none;
+  border-radius: 9999px;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: background-color 0.2s;
+}
+
+.resenas-btn:hover {
+  background-color: #2563eb;
+}
+
+.resenas-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.resenas-exito {
+  color: #15803d;
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  margin-bottom: 12px;
+}
+
+.resenas-error {
+  color: #dc2626;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  margin-bottom: 12px;
+}
+
+.resenas-lista {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+}
+
+.resenas-empty {
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+.resena-card {
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.resena-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.resena-plato {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 4px;
+}
+
+.resena-usuario {
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.resena-estrellas {
+  color: #f59e0b;
+  font-size: 1rem;
+  letter-spacing: 2px;
+}
+
+.resena-comentario {
+  font-size: 0.9rem;
+  color: #374151;
+  line-height: 1.6;
+  margin: 0 0 8px;
+}
+
+.resena-fecha {
+  font-size: 0.78rem;
+  color: #9ca3af;
+  margin: 0;
+}

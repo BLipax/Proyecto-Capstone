@@ -6,6 +6,7 @@ import Login from './pages/Login'
 import Reservas from './pages/Reservas'
 import Menu from './pages/Menu'
 import Chatbot from './components/Chatbot'
+import Resenas from './pages/Resenas'
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Route path="/registro" element={<Registro />} /> 
         <Route path="/login" element={<Login />} />
         <Route path="/reservas" element={<Reservas />} />
+        <Route path="/resenas" element={<Resenas />} />
         <Route path="/menu" element={<Menu />} />
       </Routes>
       <Chatbot />
