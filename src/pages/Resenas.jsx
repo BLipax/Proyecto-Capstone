@@ -4,6 +4,31 @@ import { useAuth } from '../context/useAuth'
 import Navbar from '../components/Navbar'
 import './Resenas.css'
 
+const Estrellas = ({ valor, onChange }) => {
+  const [hover, setHover] = useState(0)
+
+  return (
+    <div style={{ display: 'flex', gap: 4 }}>
+      {[1, 2, 3, 4, 5].map((estrella) => (
+        <span
+          key={estrella}
+          onClick={() => onChange(estrella)}
+          onMouseEnter={() => setHover(estrella)}
+          onMouseLeave={() => setHover(0)}
+          style={{
+            fontSize: 32,
+            cursor: 'pointer',
+            color: estrella <= (hover || valor) ? '#f59e0b' : '#e5e7eb',
+            transition: 'color 0.15s',
+          }}
+        >
+          ★
+        </span>
+      ))}
+    </div>
+  )
+}
+
 const Resenas = () => {
   const { user } = useAuth()
   const [platos, setPlatos] = useState([])
@@ -108,13 +133,10 @@ const Resenas = () => {
 
           <div className="resenas-field">
             <label className="resenas-label">Calificación</label>
-            <select className="resenas-input" name="calificacion" value={form.calificacion} onChange={handleChange}>
-              <option value={1}>1 - Muy malo</option>
-              <option value={2}>2 - Malo</option>
-              <option value={3}>3 - Regular</option>
-              <option value={4}>4 - Bueno</option>
-              <option value={5}>5 - Excelente</option>
-            </select>
+            <Estrellas
+              valor={form.calificacion}
+              onChange={(val) => setForm({ ...form, calificacion: val })}
+            />
           </div>
 
           <div className="resenas-field">

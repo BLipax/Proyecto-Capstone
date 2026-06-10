@@ -127,47 +127,48 @@
 }
 
 .resena-card {
+  
   border: 1.5px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 12px;
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
 }
 
 .resena-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 8px;
+  align-items: center;
+  margin-bottom: 4px;
 }
 
 .resena-plato {
-  font-size: 1rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: #1f2937;
-  margin: 0 0 4px;
+  margin: 0 0 2px;
 }
 
 .resena-usuario {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: #6b7280;
   margin: 0;
 }
 
 .resena-estrellas {
   color: #f59e0b;
-  font-size: 1rem;
-  letter-spacing: 2px;
+  font-size: 0.85rem;
+  letter-spacing: 1px;
 }
 
 .resena-comentario {
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   color: #374151;
-  line-height: 1.6;
-  margin: 0 0 8px;
+  line-height: 1.5;
+  margin: 0 0 4px;
 }
 
 .resena-fecha {
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   color: #9ca3af;
   margin: 0;
 }
