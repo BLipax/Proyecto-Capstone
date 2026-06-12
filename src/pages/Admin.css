@@ -428,3 +428,27 @@
   display: flex;
   gap: 6px;
 }
+
+.admin-etiquetas {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-etiqueta-btn {
+  padding: 5px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 9999px;
+  cursor: pointer;
+  background-color: #f9fafb;
+  color: #374151;
+  transition: all 0.15s;
+}
+
+.admin-etiqueta-btn.activa {
+  border-color: #2563eb;
+  background-color: #eff6ff;
+  color: #2563eb;
+}

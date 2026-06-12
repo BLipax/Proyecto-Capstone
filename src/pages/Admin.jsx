@@ -23,6 +23,17 @@ export default function Admin() {
   const [reservasRecientes, setReservasRecientes] = useState([])
   const [topPlatos, setTopPlatos] = useState([])
   const [platos, setPlatos] = useState([])
+  
+  const ETIQUETAS = ['vegano', 'vegetariano', 'sin gluten', 'picante']
+const [etiquetasSeleccionadas, setEtiquetasSeleccionadas] = useState([])
+
+const handleEtiqueta = (etiqueta) => {
+  setEtiquetasSeleccionadas(prev =>
+    prev.includes(etiqueta)
+      ? prev.filter(e => e !== etiqueta)
+      : [...prev, etiqueta]
+  )
+} 
 
   const topDishes = [
     { nombre: 'Cazuela de vacuno', porcentaje: 38, color: '#2563eb' },
@@ -160,6 +171,7 @@ export default function Admin() {
       ...form,
       precio: parseFloat(form.precio),
       imagen_url: imageUrl,
+      etiquetas: etiquetasSeleccionadas.join(','),
     }])
     setLoading(false)
     if (error) {
@@ -168,6 +180,7 @@ export default function Admin() {
       setMensaje({ tipo: 'success', texto: '¡Plato agregado correctamente!' })
       setForm({ nombre: '', descripcion: '', precio: '', categoria: '', disponible: 'S' })
       setFile(null)
+      setEtiquetasSeleccionadas([])
       fetchStats()
       fetchPlatos()
     }
@@ -329,6 +342,21 @@ export default function Admin() {
                 <input className="admin-form-input" name="categoria" value={form.categoria} onChange={handleChange} placeholder="Ej: Ensaladas, Pastas..." />
               </div>
               <div className="admin-form-field">
+                <div className="admin-form-field-full">
+              <label className="admin-form-label">Etiquetas</label>
+              <div className="admin-etiquetas">
+                {ETIQUETAS.map(etiqueta => (
+                  <button
+                    key={etiqueta}
+                    type="button"
+                    onClick={() => handleEtiqueta(etiqueta)}
+                    className={`admin-etiqueta-btn ${etiquetasSeleccionadas.includes(etiqueta) ? 'activa' : ''}`}
+                  >
+                    {etiqueta}
+                  </button>
+                ))}
+              </div>
+            </div>
                 <label className="admin-form-label">Disponibilidad</label>
                 <select className="admin-form-input" name="disponible" value={form.disponible} onChange={handleChange}>
                   <option value="S">Disponible</option>
