@@ -29,4 +29,5 @@ npm run dev
 
 > [!NOTE]
 > Finalmente ir a [localhost:5173](http://localhost:5173/) en un navegador.
+>
 > El panel de administrador está disponible en [localhost:5173/admin](http://localhost:5173/admin)
