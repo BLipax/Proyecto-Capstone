@@ -1,8 +1,14 @@
 import './AdminSidebar.css'
 import { useNavigate } from 'react-router-dom'
 
+import { supabase } from '../services/supabaseClient'
 const AdminSidebar = () => {
   const navigate = useNavigate()
+
+    const handleLogout = async () => {
+    await supabase.auth.signOut()
+    navigate('/')
+  }
 
   return (
     <aside className="admin-sidebar">
@@ -39,6 +45,14 @@ const AdminSidebar = () => {
         <div>
           <div className="admin-user-name">Administrador</div>
           <div className="admin-user-role">Super admin</div>
+        </div>
+      </div>
+      <div style={{ padding: '8px 10px', borderTop: '0.5px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <div className="admin-nav-item" onClick={() => navigate('/home')}>
+          🏠 Volver al inicio
+        </div>
+        <div className="admin-nav-item" onClick={handleLogout} style={{ color: '#f87171' }}>
+          🚪 Cerrar sesión
         </div>
       </div>
     </aside>
