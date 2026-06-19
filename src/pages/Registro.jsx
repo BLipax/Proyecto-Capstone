@@ -27,6 +27,10 @@ const Registro = () => {
       setError('La contraseña debe tener al menos 8 caracteres.')
       return
     }
+    if (!form.email.endsWith('@duocuc.cl')) {
+      setError('El correo debe ser institucional (@duocuc.cl).')
+      return
+    }
     setLoading(true)
     setError(null)
     const { error } = await supabase.auth.signUp({

@@ -207,142 +207,169 @@ const handleEtiqueta = (etiqueta) => {
 
   const platosParaMostrar = topPlatos.length > 0 ? topPlatos : topDishes
 
-  return (
-    <div className="admin-layout">
-  <AdminSidebar />
-      <div className="admin-main">
-        <header className="admin-topbar">
-          <h1 className="admin-topbar-title">Resumen general</h1>
-          <input type="text" placeholder="Buscar plato, usuario..." className="admin-search-input" />
-        </header>
+  const [editando, setEditando] = useState(null)
+  const [etiquetasEdit, setEtiquetasEdit] = useState([])
 
-        <main className="admin-content">
-          <div className="admin-stats-grid">
-            {stats.map((stat, i) => (
-              <div key={i} className="admin-stat-card">
-                <div className="admin-stat-top">
-                  <div>
-                    <div className="admin-stat-value">{stat.valor}</div>
-                    <div className="admin-stat-label">{stat.label}</div>
-                  </div>
-                  <div className="admin-stat-icon">{stat.icon}</div>
+  const handleGuardarEtiquetas = async () => {
+  await supabase
+    .from('platos')
+    .update({ etiquetas: etiquetasEdit.join(',') })
+    .eq('id_plato', editando)
+  setEditando(null)
+  setEtiquetasEdit([])
+  fetchPlatos()
+}
+
+const handleEtiquetaEdit = (etiqueta) => {
+  setEtiquetasEdit(prev =>
+    prev.includes(etiqueta)
+      ? prev.filter(e => e !== etiqueta)
+      : [...prev, etiqueta]
+  )
+}
+
+return (
+  <div className="admin-layout">
+    <AdminSidebar />
+    <div className="admin-main">
+      <header className="admin-topbar">
+        <h1 className="admin-topbar-title">Resumen general</h1>
+        <input type="text" placeholder="Buscar plato, usuario..." className="admin-search-input" />
+      </header>
+
+      <main className="admin-content">
+        <div className="admin-stats-grid">
+          {stats.map((stat, i) => (
+            <div key={i} className="admin-stat-card">
+              <div className="admin-stat-top">
+                <div>
+                  <div className="admin-stat-value">{stat.valor}</div>
+                  <div className="admin-stat-label">{stat.label}</div>
                 </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="admin-row2">
-            <div className="admin-panel">
-              <div className="admin-panel-head">
-                <div className="admin-panel-title">Reservas por día (últimas 2 semanas)</div>
-              </div>
-              <div className="admin-chart-bars">
-                {chartData.map((val, i) => (
-                  <div key={i} className="admin-bar-group">
-                    <div
-                      className="admin-bar"
-                      style={{ height: `${(val / maxChartValue) * 120}px` }}
-                      title={`${days[i]}: ${val} reservas`}
-                    />
-                  </div>
-                ))}
-              </div>
-              <div className="admin-chart-labels">
-                {days.map((d, i) => <div key={i} className="admin-chart-label">{d}</div>)}
+                <div className="admin-stat-icon">{stat.icon}</div>
               </div>
             </div>
+          ))}
+        </div>
 
-            <div className="admin-panel">
-              <div className="admin-panel-head">
-                <div className="admin-panel-title">Platos más solicitados</div>
-              </div>
-              <div className="admin-progress-list">
-                {platosParaMostrar.map((dish, i) => (
-                  <div key={i}>
-                    <div className="admin-progress-head">
-                      <span className="admin-progress-name">{dish.nombre}</span>
-                      <span className="admin-progress-pct">{dish.porcentaje}%</span>
-                    </div>
-                    <div className="admin-progress-track">
-                      <div className="admin-progress-fill" style={{ width: `${dish.porcentaje}%`, backgroundColor: dish.color }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
+        <div className="admin-row2">
+          <div className="admin-panel">
+            <div className="admin-panel-head">
+              <div className="admin-panel-title">Reservas por día (últimas 2 semanas)</div>
             </div>
-          </div>
-
-          <div className="admin-row3">
-            <div className="admin-panel">
-              <div className="admin-panel-head">
-                <div className="admin-panel-title">Reservas recientes</div>
-              </div>
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>Estudiante</th>
-                    <th>Plato</th>
-                    <th>Hora</th>
-                    <th>Estado</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {reservasRecientes.map((res, i) => (
-                    <tr key={i}>
-                      <td className="admin-td">{res.usuarios?.email?.split('@')[0] ?? 'Usuario'}</td>
-                      <td className="admin-td-normal">{res.reserva_platos?.[0]?.platos?.nombre ?? '—'}</td>
-                      <td className="admin-td-normal">{res.hora_retiro}</td>
-                      <td className="admin-td-normal">
-                        <span className={getEstadoColor(res.estado)}>{res.estado}</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="admin-chart-bars">
+              {chartData.map((val, i) => (
+                <div key={i} className="admin-bar-group">
+                  <div className="admin-bar" style={{ height: `${(val / maxChartValue) * 120}px` }} title={`${days[i]}: ${val} reservas`} />
+                </div>
+              ))}
             </div>
-
-            <div className="admin-panel">
-              <div className="admin-panel-head">
-                <div className="admin-panel-title">Actividad reciente</div>
-              </div>
-              <div className="admin-activity-list">
-                {activities.map((act, i) => (
-                  <div key={i} className="admin-activity-item">
-                    <div className="admin-act-dot" style={{ backgroundColor: getActivityColor(act.tipo) }} />
-                    <div>
-                      <div className="admin-act-text"><strong>{act.titulo}</strong> {act.texto}</div>
-                      <div className="admin-act-time">{act.tiempo}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+            <div className="admin-chart-labels">
+              {days.map((d, i) => <div key={i} className="admin-chart-label">{d}</div>)}
             </div>
           </div>
 
           <div className="admin-panel">
             <div className="admin-panel-head">
-              <div className="admin-panel-title">Agregar nuevo plato al menú</div>
-              <div className="admin-panel-sub">Los campos con * son obligatorios</div>
+              <div className="admin-panel-title">Platos más solicitados</div>
             </div>
-            <div className="admin-form-grid">
-              <div className="admin-form-field-full">
-                <label className="admin-form-label">Nombre del plato *</label>
-                <input className="admin-form-input" name="nombre" value={form.nombre} onChange={handleChange} placeholder="Ej: Ensalada mediterránea" />
-              </div>
-              <div className="admin-form-field-full">
-                <label className="admin-form-label">Descripción</label>
-                <textarea className="admin-form-textarea" name="descripcion" value={form.descripcion} onChange={handleChange} placeholder="Descripción breve del plato..." />
-              </div>
-              <div className="admin-form-field">
-                <label className="admin-form-label">Precio (CLP) *</label>
-                <input className="admin-form-input" type="number" name="precio" value={form.precio} onChange={handleChange} placeholder="Ej: 4990" />
-              </div>
-              <div className="admin-form-field">
-                <label className="admin-form-label">Categoría</label>
-                <input className="admin-form-input" name="categoria" value={form.categoria} onChange={handleChange} placeholder="Ej: Ensaladas, Pastas..." />
-              </div>
-              <div className="admin-form-field">
-                <div className="admin-form-field-full">
+            <div className="admin-progress-list">
+              {platosParaMostrar.map((dish, i) => (
+                <div key={i}>
+                  <div className="admin-progress-head">
+                    <span className="admin-progress-name">{dish.nombre}</span>
+                    <span className="admin-progress-pct">{dish.porcentaje}%</span>
+                  </div>
+                  <div className="admin-progress-track">
+                    <div className="admin-progress-fill" style={{ width: `${dish.porcentaje}%`, backgroundColor: dish.color }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="admin-row3">
+          <div className="admin-panel">
+            <div className="admin-panel-head">
+              <div className="admin-panel-title">Reservas recientes</div>
+            </div>
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Estudiante</th>
+                  <th>Plato</th>
+                  <th>Hora</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {reservasRecientes.map((res, i) => (
+                  <tr key={i}>
+                    <td className="admin-td">{res.usuarios?.email?.split('@')[0] ?? 'Usuario'}</td>
+                    <td className="admin-td-normal">{res.reserva_platos?.[0]?.platos?.nombre ?? '—'}</td>
+                    <td className="admin-td-normal">{res.hora_retiro}</td>
+                    <td className="admin-td-normal">
+                      <span className={getEstadoColor(res.estado)}>{res.estado}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="admin-panel">
+            <div className="admin-panel-head">
+              <div className="admin-panel-title">Actividad reciente</div>
+            </div>
+            <div className="admin-activity-list">
+              {activities.map((act, i) => (
+                <div key={i} className="admin-activity-item">
+                  <div className="admin-act-dot" style={{ backgroundColor: getActivityColor(act.tipo) }} />
+                  <div>
+                    <div className="admin-act-text"><strong>{act.titulo}</strong> {act.texto}</div>
+                    <div className="admin-act-time">{act.tiempo}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="admin-panel">
+          <div className="admin-panel-head">
+            <div className="admin-panel-title">Agregar nuevo plato al menú</div>
+            <div className="admin-panel-sub">Los campos con * son obligatorios</div>
+          </div>
+          <div className="admin-form-grid">
+            <div className="admin-form-field-full">
+              <label className="admin-form-label">Nombre del plato *</label>
+              <input className="admin-form-input" name="nombre" value={form.nombre} onChange={handleChange} placeholder="Ej: Ensalada mediterránea" />
+            </div>
+            <div className="admin-form-field-full">
+              <label className="admin-form-label">Descripción</label>
+              <textarea className="admin-form-textarea" name="descripcion" value={form.descripcion} onChange={handleChange} placeholder="Descripción breve del plato..." />
+            </div>
+            <div className="admin-form-field">
+              <label className="admin-form-label">Precio (CLP) *</label>
+              <input className="admin-form-input" type="number" name="precio" value={form.precio} onChange={handleChange} placeholder="Ej: 4990" />
+            </div>
+            <div className="admin-form-field">
+              <label className="admin-form-label">Categoría</label>
+              <input className="admin-form-input" name="categoria" value={form.categoria} onChange={handleChange} placeholder="Ej: Ensaladas, Pastas..." />
+            </div>
+            <div className="admin-form-field">
+              <label className="admin-form-label">Disponibilidad</label>
+              <select className="admin-form-input" name="disponible" value={form.disponible} onChange={handleChange}>
+                <option value="S">Disponible</option>
+                <option value="N">No disponible</option>
+              </select>
+            </div>
+            <div className="admin-form-field">
+              <label className="admin-form-label">Imagen del plato</label>
+              <input type="file" accept="image/*" onChange={handleFileChange} className="admin-form-input" style={{ padding: '6px 10px' }} />
+            </div>
+            <div className="admin-form-field-full">
               <label className="admin-form-label">Etiquetas</label>
               <div className="admin-etiquetas">
                 {ETIQUETAS.map(etiqueta => (
@@ -357,73 +384,101 @@ const handleEtiqueta = (etiqueta) => {
                 ))}
               </div>
             </div>
-                <label className="admin-form-label">Disponibilidad</label>
-                <select className="admin-form-input" name="disponible" value={form.disponible} onChange={handleChange}>
-                  <option value="S">Disponible</option>
-                  <option value="N">No disponible</option>
-                </select>
+            {mensaje && (
+              <div className={mensaje.tipo === 'success' ? 'admin-msg-success' : 'admin-msg-error'}>
+                {mensaje.texto}
               </div>
-              <div className="admin-form-field">
-                <label className="admin-form-label">Imagen del plato</label>
-                <input type="file" accept="image/*" onChange={handleFileChange} className="admin-form-input" style={{ padding: '6px 10px' }} />
-              </div>
-              {mensaje && (
-                <div className={mensaje.tipo === 'success' ? 'admin-msg-success' : 'admin-msg-error'}>
-                  {mensaje.texto}
-                </div>
-              )}
-              <div className="admin-form-actions">
-                <button className="admin-btn-secondary" type="button">Cancelar</button>
-                <button className="admin-btn-primary" disabled={loading} onClick={handleSubmit}>
-                  {loading ? 'Guardando...' : '➕ Agregar plato'}
-                </button>
-              </div>
+            )}
+            <div className="admin-form-actions">
+              <button className="admin-btn-secondary" type="button">Cancelar</button>
+              <button className="admin-btn-primary" disabled={loading} onClick={handleSubmit}>
+                {loading ? 'Guardando...' : '➕ Agregar plato'}
+              </button>
             </div>
           </div>
+        </div>
 
+        <div className="admin-panel">
+          <div className="admin-panel-head">
+            <div className="admin-panel-title">Gestión de platos</div>
+            <div className="admin-panel-sub">{platos.length} platos registrados</div>
+          </div>
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Categoría</th>
+                <th>Precio</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {platos.map((plato) => (
+                <tr key={plato.id_plato}>
+                  <td className="admin-td">{plato.nombre}</td>
+                  <td className="admin-td-normal">{plato.categoria || '—'}</td>
+                  <td className="admin-td-normal">${plato.precio?.toLocaleString('es-CL')}</td>
+                  <td className="admin-td-normal">
+                    <span className={`admin-pill ${plato.disponible === 'S' ? 'admin-pill-verde' : 'admin-pill-rojo'}`}>
+                      {plato.disponible === 'S' ? 'Disponible' : 'No disponible'}
+                    </span>
+                  </td>
+                  <td className="admin-td-normal">
+                    <div className="admin-btn-actions">
+                      <button className="admin-btn-toggle" onClick={() => handleToggleDisponible(plato.id_plato, plato.disponible)}>
+                        {plato.disponible === 'S' ? 'Desactivar' : 'Activar'}
+                      </button>
+                      <button
+                        className="admin-btn-toggle"
+                        onClick={() => {
+                          setEditando(plato.id_plato)
+                          setEtiquetasEdit(plato.etiquetas ? plato.etiquetas.split(',').map(e => e.trim()) : [])
+                        }}
+                      >
+                        Etiquetas
+                      </button>
+                      <button className="admin-btn-eliminar" onClick={() => handleEliminar(plato.id_plato)}>
+                        Eliminar
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {editando && (
           <div className="admin-panel">
             <div className="admin-panel-head">
-              <div className="admin-panel-title">Gestión de platos</div>
-              <div className="admin-panel-sub">{platos.length} platos registrados</div>
+              <div className="admin-panel-title">
+                Editar etiquetas — {platos.find(p => p.id_plato === editando)?.nombre}
+              </div>
+              <button className="admin-btn-secondary" onClick={() => setEditando(null)}>
+                Cancelar
+              </button>
             </div>
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>Nombre</th>
-                  <th>Categoría</th>
-                  <th>Precio</th>
-                  <th>Estado</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {platos.map((plato) => (
-                  <tr key={plato.id_plato}>
-                    <td className="admin-td">{plato.nombre}</td>
-                    <td className="admin-td-normal">{plato.categoria || '—'}</td>
-                    <td className="admin-td-normal">${plato.precio?.toLocaleString('es-CL')}</td>
-                    <td className="admin-td-normal">
-                      <span className={`admin-pill ${plato.disponible === 'S' ? 'admin-pill-verde' : 'admin-pill-rojo'}`}>
-                        {plato.disponible === 'S' ? 'Disponible' : 'No disponible'}
-                      </span>
-                    </td>
-                    <td className="admin-td-normal">
-                      <div className="admin-btn-actions">
-                        <button className="admin-btn-toggle" onClick={() => handleToggleDisponible(plato.id_plato, plato.disponible)}>
-                          {plato.disponible === 'S' ? 'Desactivar' : 'Activar'}
-                        </button>
-                        <button className="admin-btn-eliminar" onClick={() => handleEliminar(plato.id_plato)}>
-                          Eliminar
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="admin-etiquetas" style={{ marginBottom: 16 }}>
+              {ETIQUETAS.map(etiqueta => (
+                <button
+                  key={etiqueta}
+                  type="button"
+                  onClick={() => handleEtiquetaEdit(etiqueta)}
+                  className={`admin-etiqueta-btn ${etiquetasEdit.includes(etiqueta) ? 'activa' : ''}`}
+                >
+                  {etiqueta}
+                </button>
+              ))}
+            </div>
+            <button className="admin-btn-primary" onClick={handleGuardarEtiquetas}>
+              Guardar etiquetas
+            </button>
           </div>
-        </main>
-      </div>
+        )}
+
+      </main>
     </div>
-  )
-} 
+  </div>
+)
+}

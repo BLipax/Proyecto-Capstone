@@ -1,6 +1,9 @@
 import './AdminSidebar.css'
+import { useNavigate } from 'react-router-dom'
 
 const AdminSidebar = () => {
+  const navigate = useNavigate()
+
   return (
     <aside className="admin-sidebar">
       <div className="admin-sidebar-logo">
@@ -13,16 +16,18 @@ const AdminSidebar = () => {
       <nav className="admin-nav">
         <div className="admin-nav-section">
           <div className="admin-nav-label">Principal</div>
-          <div className="admin-nav-item-active">📊 Resumen</div>
+          <div className="admin-nav-item" onClick={() => navigate('/admin')}>📊 Resumen</div>
           <div className="admin-nav-item">🍽️ Menú del día</div>
           <div className="admin-nav-item">📅 Reservas</div>
-          <div className="admin-nav-item">👥 Usuarios</div>
+         <div className="admin-nav-item" onClick={() => navigate('/admin/usuarios')}>
+      👥 Usuarios
+    </div>
         </div>
         <div className="admin-nav-section">
           <div className="admin-nav-label">Gestión</div>
           <div className="admin-nav-item">➕ Agregar plato</div>
           <div className="admin-nav-item">✏️ Editar menú</div>
-          <div className="admin-nav-item">📈 Reportes</div>
+          <div className="admin-nav-item" onClick={() => navigate('/admin/reportes')}>📈 Reportes</div>
         </div>
         <div className="admin-nav-section">
           <div className="admin-nav-label">Sistema</div>

@@ -7,6 +7,8 @@ import Reservas from './pages/Reservas'
 import Menu from './pages/Menu'
 import Chatbot from './components/Chatbot'
 import Resenas from './pages/Resenas'
+import AdminUsuarios from './pages/AdminUsuarios'
+import AdminReportes from './pages/AdminReportes'
 
 function App() {
   return (
@@ -20,6 +22,8 @@ function App() {
         <Route path="/reservas" element={<Reservas />} />
         <Route path="/resenas" element={<Resenas />} />
         <Route path="/menu" element={<Menu />} />
+        <Route path="/admin/usuarios" element={<AdminUsuarios />} />
+        <Route path="/admin/reportes" element={<AdminReportes />} />
       </Routes>
       <Chatbot />
     </BrowserRouter>

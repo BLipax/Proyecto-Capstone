@@ -22,7 +22,7 @@ const Navbar = () => {
         <Link to="/home" className={location.pathname === '/home' ? 'nav-link active' : 'nav-link'}>Inicio</Link>
         <Link to="/menu" className={location.pathname === '/menu' ? 'nav-link active' : 'nav-link'}>Menú</Link>
         <Link to="/reservas" className={location.pathname === '/reservas' ? 'nav-link active' : 'nav-link'}>Reservas</Link>
-        <Link to="/resenas" className={location.pathname === '/resenas' ? 'nav-link active' : 'nav-link'}>Reseñas</Link>
+        <Link to="/resenas" className={location.pathname === '/resenas' ? 'nav-link active' : 'nav-link'}>Ver todas las Reseñas</Link>
       </div>
       <div className="navbar-user"> 
         {user ? (
@@ -37,9 +37,15 @@ const Navbar = () => {
                 <button className="nav-dropdown-item" onClick={() => { navigate('/perfil'); setMenuAbierto(false) }}>
                   Mi perfil
                 </button>
-                <button className="nav-dropdown-item danger" onClick={handleLogout}>
-                  Cerrar sesión
+                {user && !user.email?.endsWith('@duocuc.cl') && (
+                <button className="nav-dropdown-item" onClick={() => { navigate('/admin'); setMenuAbierto(false) }}>
+                  ⚙️ Panel admin
                 </button>
+              )}
+              <hr className="nav-dropdown-divider" />
+              <button className="nav-dropdown-item danger" onClick={handleLogout}>
+                Cerrar sesión
+              </button>
               </div>
             )}
           </div>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { supabase } from '../services/supabaseClient'
 import { useAuth } from '../context/useAuth'
 import Navbar from '../components/Navbar'
@@ -37,6 +38,7 @@ const Resenas = () => {
   const [form, setForm] = useState({ id_plato: '', calificacion: 5, comentario: '' })
   const [loading, setLoading] = useState(false)
   const [mensaje, setMensaje] = useState(null)
+  const location = useLocation()
 
 
   const fetchPlatos = async () => {
@@ -71,9 +73,12 @@ const Resenas = () => {
         .eq('auth_id', user.id)
         .single()
       if (data) setIdUsuario(data.id_usuario)
+              if (location.state?.id_plato) {
+        setForm(prev => ({ ...prev, id_plato: String(location.state.id_plato) }))
+      }
     }
     init()
-  }, [user])
+  }, [user, location.state])
 
 
 
