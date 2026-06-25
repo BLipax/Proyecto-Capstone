@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../services/supabaseClient'
 import AdminSidebar from '../components/AdminSidebar'
-import { useNavigate } from 'react-router-dom'
 import './Admin.css'
 
 const AdminMenuDia = () => {
-  const navigate = useNavigate()
   const [platos, setPlatos] = useState([])
   const [menuDia, setMenuDia] = useState([])
   const [fechaMenu, setFechaMenu] = useState(new Date().toISOString().split('T')[0])

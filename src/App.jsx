@@ -11,11 +11,10 @@ import AdminUsuarios from './pages/AdminUsuarios'
 import AdminReportes from './pages/AdminReportes'
 import AdminAgregarPlato from './pages/AdminAgregarPlato'
 import AdminEditarMenu from './pages/AdminEditarMenu'
-// import ProtectedRoute from './components/ProtectedRoute'
+import ProtectedRoute from './components/ProtectedRoute'
 import AdminReservas from './pages/AdminReservas'
 import AdminMenuDia from './pages/AdminMenuDia'
 import MisReservas from './pages/MisReservas'
-
 
 function App() {
   return (
@@ -24,18 +23,18 @@ function App() {
         <Route path="/" element={<Login />} />
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Registro />} />
-        <Route path="/home" element={<Home />} />
-        <Route path="/menu" element={<Menu />} />
-        <Route path="/reservas" element={<Reservas />} />
-        <Route path="/mis-reservas" element={<MisReservas />} />
-        <Route path="/resenas" element={<Resenas />} />
-        <Route path="/admin" element={<Admin />} />
-        <Route path="/admin/usuarios" element={<AdminUsuarios />} />
-        <Route path="/admin/reportes" element={<AdminReportes />} />
-        <Route path="/admin/agregar-plato" element={<AdminAgregarPlato />} />
-        <Route path="/admin/editar-menu" element={<AdminEditarMenu />} />
-        <Route path="/admin/reservas" element={<AdminReservas />} />
-        <Route path="/admin/menu-dia" element={<AdminMenuDia />} />
+        <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+        <Route path="/menu" element={<ProtectedRoute><Menu /></ProtectedRoute>} />
+        <Route path="/reservas" element={<ProtectedRoute><Reservas /></ProtectedRoute>} />
+        <Route path="/resenas" element={<ProtectedRoute><Resenas /></ProtectedRoute>} />
+        <Route path="/mis-reservas" element={<ProtectedRoute><MisReservas /></ProtectedRoute>} />
+        <Route path="/admin" element={<ProtectedRoute soloAdmin><Admin /></ProtectedRoute>} />
+        <Route path="/admin/usuarios" element={<ProtectedRoute soloAdmin><AdminUsuarios /></ProtectedRoute>} />
+        <Route path="/admin/reportes" element={<ProtectedRoute soloAdmin><AdminReportes /></ProtectedRoute>} />
+        <Route path="/admin/agregar-plato" element={<ProtectedRoute soloAdmin><AdminAgregarPlato /></ProtectedRoute>} />
+        <Route path="/admin/editar-menu" element={<ProtectedRoute soloAdmin><AdminEditarMenu /></ProtectedRoute>} />
+        <Route path="/admin/reservas" element={<ProtectedRoute soloAdmin><AdminReservas /></ProtectedRoute>} />
+        <Route path="/admin/menu-dia" element={<ProtectedRoute soloAdmin><AdminMenuDia /></ProtectedRoute>} />
       </Routes>
       <Chatbot />
     </BrowserRouter>

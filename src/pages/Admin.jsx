@@ -12,6 +12,8 @@ export default function Admin() {
   })
   const [reservasRecientes, setReservasRecientes] = useState([])
   const [topPlatos, setTopPlatos] = useState([])
+  const [reservasSemana, setReservasSemana] = useState([])
+  const [actividad, setActividad] = useState([])
 
   const topDishes = [
     { nombre: 'Cazuela de vacuno', porcentaje: 38, color: '#2563eb' },
@@ -20,17 +22,6 @@ export default function Admin() {
     { nombre: 'Pollo al ajillo', porcentaje: 12, color: '#059669' },
     { nombre: 'Otros', porcentaje: 7, color: '#9ca3af' },
   ]
-
-  const activities = [
-    { tipo: 'success', titulo: 'Plato agregado:', texto: 'Cazuela de mariscos al menú', tiempo: 'Hace 5 minutos' },
-    { tipo: 'warning', titulo: 'Reserva pendiente', texto: 'F. Rojas, almuerzo 13:00', tiempo: 'Hace 18 minutos' },
-    { tipo: 'error', titulo: 'Plato sin stock:', texto: 'Lasaña boloñesa desactivada', tiempo: 'Hace 42 minutos' },
-    { tipo: 'info', titulo: 'Menú actualizado', texto: 'para mañana miércoles', tiempo: 'Hace 1 hora' },
-  ]
-
-  const chartData = [41, 53, 38, 62, 47, 55, 53]
-  const maxChartValue = Math.max(...chartData)
-  const days = ['L', 'M', 'X', 'J', 'V', 'L', 'M']
 
   const fetchStats = async () => {
     const hoy = new Date().toISOString().split('T')[0]
@@ -56,6 +47,7 @@ export default function Admin() {
         id_reserva,
         hora_retiro,
         estado,
+        fecha_reserva,
         usuarios ( email ),
         reserva_platos ( platos ( nombre ) )
       `)
@@ -84,11 +76,101 @@ export default function Admin() {
     setTopPlatos(ordenados)
   }
 
+  const fetchReservasSemana = async () => {
+    const hoy = new Date()
+    const hace14 = new Date(hoy)
+    hace14.setDate(hoy.getDate() - 14)
+    const desde = hace14.toISOString().split('T')[0]
+
+    const { data } = await supabase
+      .from('reservas')
+      .select('fecha_reserva')
+      .neq('estado', 'cancelada')
+      .gte('fecha_reserva', desde)
+
+    if (!data) return
+
+    const conteo = {}
+    data.forEach(r => {
+      conteo[r.fecha_reserva] = (conteo[r.fecha_reserva] || 0) + 1
+    })
+
+    const resultado = []
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(hoy)
+      d.setDate(hoy.getDate() - i)
+      const diaSemana = d.getDay()
+      if (diaSemana === 0 || diaSemana === 6) continue
+      const fecha = d.toISOString().split('T')[0]
+      const dias = ['D', 'L', 'M', 'X', 'J', 'V', 'S']
+      resultado.push({ dia: dias[diaSemana], reservas: conteo[fecha] || 0 })
+    }
+
+    setReservasSemana(resultado)
+  }
+
+  const fetchActividad = async () => {
+    const eventos = []
+
+    // Últimas reservas
+    const { data: reservas } = await supabase
+      .from('reservas')
+      .select('id_reserva, estado, fecha_reserva, created_at, usuarios ( email ), reserva_platos ( platos ( nombre ) )')
+      .order('created_at', { ascending: false })
+      .limit(5)
+
+    if (reservas) {
+      reservas.forEach(r => {
+        const usuario = r.usuarios?.email?.split('@')[0] ?? 'Usuario'
+        const plato = r.reserva_platos?.[0]?.platos?.nombre ?? 'un plato'
+        const tiempo = formatTiempo(r.created_at)
+        if (r.estado === 'cancelada') {
+          eventos.push({ tipo: 'error', titulo: 'Reserva cancelada:', texto: `${usuario} canceló ${plato}`, tiempo })
+        } else {
+          eventos.push({ tipo: 'info', titulo: 'Nueva reserva:', texto: `${usuario} reservó ${plato}`, tiempo })
+        }
+      })
+    }
+
+    // Últimos platos agregados
+    const { data: platos } = await supabase
+      .from('platos')
+      .select('nombre, created_at, disponible')
+      .order('created_at', { ascending: false })
+      .limit(3)
+
+    if (platos) {
+      platos.forEach(p => {
+        const tiempo = formatTiempo(p.created_at)
+        if (p.disponible === 'S') {
+          eventos.push({ tipo: 'success', titulo: 'Plato agregado:', texto: `${p.nombre} al menú`, tiempo })
+        } else {
+          eventos.push({ tipo: 'warning', titulo: 'Plato desactivado:', texto: p.nombre, tiempo })
+        }
+      })
+    }
+
+    // Ordenar por tiempo más reciente
+    eventos.sort((a, b) => new Date(b.tiempo) - new Date(a.tiempo))
+    setActividad(eventos.slice(0, 6))
+  }
+
+  const formatTiempo = (timestamp) => {
+    if (!timestamp) return ''
+    const diff = Math.floor((new Date() - new Date(timestamp)) / 1000)
+    if (diff < 60) return 'Hace un momento'
+    if (diff < 3600) return `Hace ${Math.floor(diff / 60)} min`
+    if (diff < 86400) return `Hace ${Math.floor(diff / 3600)} h`
+    return `Hace ${Math.floor(diff / 86400)} días`
+  }
+
   useEffect(() => {
     const loadData = async () => {
       await fetchStats()
       await fetchReservasRecientes()
       await fetchTopPlatos()
+      await fetchReservasSemana()
+      await fetchActividad()
     }
     loadData()
   }, [])
@@ -101,9 +183,10 @@ export default function Admin() {
   ]
 
   const getEstadoColor = (estado) => {
-    if (estado === 'Lista') return 'admin-pill admin-pill-verde'
-    if (estado === 'Pendiente') return 'admin-pill admin-pill-amarillo'
-    if (estado === 'Cancelada') return 'admin-pill admin-pill-rojo'
+    if (estado === 'lista') return 'admin-pill admin-pill-verde'
+    if (estado === 'pendiente') return 'admin-pill admin-pill-amarillo'
+    if (estado === 'cancelada') return 'admin-pill admin-pill-rojo'
+    if (estado === 'entregada') return 'admin-pill'
     return 'admin-pill'
   }
 
@@ -145,14 +228,23 @@ export default function Admin() {
                 <div className="admin-panel-title">Reservas por día (últimas 2 semanas)</div>
               </div>
               <div className="admin-chart-bars">
-                {chartData.map((val, i) => (
-                  <div key={i} className="admin-bar-group">
-                    <div className="admin-bar" style={{ height: `${(val / maxChartValue) * 120}px` }} title={`${days[i]}: ${val} reservas`} />
-                  </div>
-                ))}
+                {reservasSemana.map((item, i) => {
+                  const max = Math.max(...reservasSemana.map(r => r.reservas), 1)
+                  return (
+                    <div key={i} className="admin-bar-group">
+                      <div
+                        className="admin-bar"
+                        style={{ height: `${(item.reservas / max) * 120}px` }}
+                        title={`${item.dia}: ${item.reservas} reservas`}
+                      />
+                    </div>
+                  )
+                })}
               </div>
               <div className="admin-chart-labels">
-                {days.map((d, i) => <div key={i} className="admin-chart-label">{d}</div>)}
+                {reservasSemana.map((item, i) => (
+                  <div key={i} className="admin-chart-label">{item.dia}</div>
+                ))}
               </div>
             </div>
 
@@ -210,7 +302,7 @@ export default function Admin() {
                 <div className="admin-panel-title">Actividad reciente</div>
               </div>
               <div className="admin-activity-list">
-                {activities.map((act, i) => (
+                {actividad.length > 0 ? actividad.map((act, i) => (
                   <div key={i} className="admin-activity-item">
                     <div className="admin-act-dot" style={{ backgroundColor: getActivityColor(act.tipo) }} />
                     <div>
@@ -218,7 +310,9 @@ export default function Admin() {
                       <div className="admin-act-time">{act.tiempo}</div>
                     </div>
                   </div>
-                ))}
+                )) : (
+                  <p style={{ color: '#9ca3af', fontSize: 13 }}>Sin actividad reciente.</p>
+                )}
               </div>
             </div>
           </div>

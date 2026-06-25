@@ -1,13 +1,30 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../services/supabaseClient'
+import { useAuth } from '../context/useAuth'
 import './Login.css'
 
 const Login = () => {
   const navigate = useNavigate()
+  const { user, cargando } = useAuth()
   const [form, setForm] = useState({ email: '', password: '' })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [intentoLogin, setIntentoLogin] = useState(false)
+
+  // Cuando el contexto termina de cargar después del login, navega
+  useEffect(() => {
+    if (intentoLogin && !cargando && user) {
+      navigate('/home')
+    }
+  }, [intentoLogin, cargando, user])
+
+  // Si ya hay sesión activa, redirige directo
+  useEffect(() => {
+    if (!cargando && user) {
+      navigate('/home')
+    }
+  }, [cargando, user])
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })
@@ -28,7 +45,7 @@ const Login = () => {
     if (error) {
       setError('Correo o contraseña incorrectos.')
     } else {
-      navigate('/home')
+      setIntentoLogin(true)
     }
   }
 

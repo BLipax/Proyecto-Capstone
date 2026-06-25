@@ -106,7 +106,17 @@ const AdminAgregarPlato = () => {
               </div>
               <div className="admin-form-field">
                 <label className="admin-form-label">Categoría</label>
-                <input className="admin-form-input" name="categoria" value={form.categoria} onChange={handleChange} placeholder="Ej: Ensaladas, Pastas..." />
+                <select className="admin-form-input" name="categoria" value={form.categoria} onChange={handleChange}>
+                  <option value="">Seleccionar categoría...</option>
+                  <option value="Plato de fondo">Plato de fondo</option>
+                  <option value="Ensalada">Ensalada</option>
+                  <option value="Sopa / Cazuela">Sopa / Cazuela</option>
+                  <option value="Sandwich">Sandwich</option>
+                  <option value="Pasta">Pasta</option>
+                  <option value="Vegetariano">Vegetariano</option>
+                  <option value="Postre">Postre</option>
+                  <option value="Bebida">Bebida</option>
+                </select>
               </div>
               <div className="admin-form-field">
                 <label className="admin-form-label">Disponibilidad</label>

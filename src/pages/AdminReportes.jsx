@@ -18,6 +18,27 @@ const AdminReportes = () => {
   const [totalPlatos, setTotalPlatos] = useState(0)
   const [platosPorDia, setPlatosPorDia] = useState([])
   const [platosPorHora, setPlatosPorHora] = useState([])
+  const [tabActivo, setTabActivo] = useState('platos')
+  const [filtroPlato, setFiltroPlato] = useState('')
+  const [filtroRango, setFiltroRango] = useState('semana')
+  const [filtroFechaDesde, setFiltroFechaDesde] = useState('')
+  const [filtroFechaHasta, setFiltroFechaHasta] = useState('')
+
+  const getRangoFechas = () => {
+    const hoy = new Date()
+    const hasta = hoy.toISOString().split('T')[0]
+    if (filtroRango === 'semana') {
+      const d = new Date(hoy)
+      d.setDate(hoy.getDate() - 7)
+      return { desde: d.toISOString().split('T')[0], hasta }
+    } else if (filtroRango === 'mes') {
+      const d = new Date(hoy)
+      d.setDate(hoy.getDate() - 30)
+      return { desde: d.toISOString().split('T')[0], hasta }
+    } else {
+      return { desde: filtroFechaDesde, hasta: filtroFechaHasta || hasta }
+    }
+  }
 
   const fetchReportes = async () => {
     const { data: dataPlatosVendidos } = await supabase
@@ -34,11 +55,18 @@ const AdminReportes = () => {
       setPlatosMasVendidos(ordenados)
       setTotalPlatos(dataPlatosVendidos.reduce((acc, r) => acc + r.cantidad, 0))
     }
+  }
+
+  const fetchReportesFiltrados = async () => {
+    const { desde, hasta } = getRangoFechas()
+    if (!desde || !hasta) return
 
     const { data: dataReservas } = await supabase
       .from('reservas')
       .select('fecha_reserva, estado')
       .neq('estado', 'cancelada')
+      .gte('fecha_reserva', desde)
+      .lte('fecha_reserva', hasta)
 
     if (dataReservas) {
       setTotalReservas(dataReservas.length)
@@ -57,6 +85,8 @@ const AdminReportes = () => {
       .from('reservas')
       .select('hora_retiro')
       .neq('estado', 'cancelada')
+      .gte('fecha_reserva', desde)
+      .lte('fecha_reserva', hasta)
 
     if (dataHoras) {
       const porHora = {}
@@ -128,11 +158,19 @@ const AdminReportes = () => {
   useEffect(() => {
     const init = async () => {
       await fetchReportes()
+      await fetchReportesFiltrados()
       await fetchPlatosPorDia()
       await fetchPlatosPorHora()
     }
     init()
   }, [])
+
+  useEffect(() => {
+    const cargarReportesFiltrados = async () => {
+      await fetchReportesFiltrados()
+    }
+    cargarReportesFiltrados()
+  }, [filtroRango, filtroFechaDesde, filtroFechaHasta])
 
   return (
     <div className="admin-layout">
@@ -144,6 +182,7 @@ const AdminReportes = () => {
 
         <main className="admin-content">
 
+          {/* Stats — siempre visibles */}
           <div className="admin-stats-grid">
             <div className="admin-stat-card">
               <div className="admin-stat-top">
@@ -187,140 +226,226 @@ const AdminReportes = () => {
             </div>
           </div>
 
-          <div className="admin-row2">
-            <div className="admin-panel">
-              <div className="admin-panel-head">
-                <div className="admin-panel-title">Platos más vendidos</div>
-              </div>
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={platosMasVendidos} margin={{ top: 5, right: 10, left: -20, bottom: 40 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-                  <XAxis dataKey="nombre" tick={{ fontSize: 10 }} angle={-20} textAnchor="end" />
-                  <YAxis tick={{ fontSize: 10 }} />
-                  <Tooltip />
-                  <Bar dataKey="total" fill="#2563eb" radius={[4, 4, 0, 0]} name="Vendidos" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-
-            <div className="admin-panel">
-              <div className="admin-panel-head">
-                <div className="admin-panel-title">Distribución por plato</div>
-              </div>
-              <ResponsiveContainer width="100%" height={220}>
-                <PieChart>
-                  <Pie
-                    data={platosMasVendidos}
-                    dataKey="total"
-                    nameKey="nombre"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={80}
-                    label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
-                    labelLine={false}
-                  >
-                    {platosMasVendidos.map((_, i) => (
-                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Legend iconSize={8} wrapperStyle={{ fontSize: 10 }} />
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
+          {/* Tabs */}
+          <div className="admin-tabs">
+            <button
+              className={`admin-tab ${tabActivo === 'platos' ? 'activo' : ''}`}
+              onClick={() => setTabActivo('platos')}
+            >
+              🍽️ Platos
+            </button>
+            <button
+              className={`admin-tab ${tabActivo === 'reservas' ? 'activo' : ''}`}
+              onClick={() => setTabActivo('reservas')}
+            >
+              📅 Reservas
+            </button>
           </div>
 
-          <div className="admin-row2">
-            <div className="admin-panel">
-              <div className="admin-panel-head">
-                <div className="admin-panel-title">Reservas por día de semana</div>
+          {/* Tab Platos */}
+          {tabActivo === 'platos' && (
+            <>
+              <div className="admin-row2">
+                <div className="admin-panel">
+                  <div className="admin-panel-head">
+                    <div className="admin-panel-title">Platos más vendidos</div>
+                  </div>
+                  <ResponsiveContainer width="100%" height={220}>
+                    <BarChart data={platosMasVendidos} margin={{ top: 5, right: 10, left: -20, bottom: 40 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                      <XAxis dataKey="nombre" tick={{ fontSize: 10 }} angle={-20} textAnchor="end" />
+                      <YAxis tick={{ fontSize: 10 }} />
+                      <Tooltip />
+                      <Bar dataKey="total" radius={[4, 4, 0, 0]} name="Vendidos">
+                        {platosMasVendidos.map((_, i) => (
+                          <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="admin-panel">
+                  <div className="admin-panel-head">
+                    <div className="admin-panel-title">Distribución por plato</div>
+                  </div>
+                  <ResponsiveContainer width="100%" height={220}>
+                    <PieChart>
+                      <Pie
+                        data={platosMasVendidos}
+                        dataKey="total"
+                        nameKey="nombre"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={80}
+                        label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
+                        labelLine={false}
+                      >
+                        {platosMasVendidos.map((_, i) => (
+                          <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Legend iconSize={8} wrapperStyle={{ fontSize: 10 }} />
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={reservasPorDia} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-                  <XAxis dataKey="nombre" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip />
-                  <Bar dataKey="reservas" fill="#7c3aed" radius={[4, 4, 0, 0]} name="Reservas" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
 
-            <div className="admin-panel">
-              <div className="admin-panel-head">
-                <div className="admin-panel-title">Reservas por hora de retiro</div>
+              {/* Filtro por plato */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                <label className="admin-form-label" style={{ margin: 0 }}>Filtrar por plato:</label>
+                <select
+                  className="admin-form-input"
+                  style={{ maxWidth: 260 }}
+                  value={filtroPlato}
+                  onChange={(e) => setFiltroPlato(e.target.value)}
+                >
+                  <option value="">Todos los platos</option>
+                  {platosMasVendidos.map((p, i) => (
+                    <option key={i} value={p.nombre}>{p.nombre}</option>
+                  ))}
+                </select>
               </div>
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={reservasPorHora} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-                  <XAxis dataKey="hora" tick={{ fontSize: 10 }} />
-                  <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip />
-                  <Bar dataKey="reservas" fill="#0891b2" radius={[4, 4, 0, 0]} name="Reservas" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
 
-          <div className="admin-panel">
-            <div className="admin-panel-head">
-              <div className="admin-panel-title">Plato más pedido por día de semana</div>
-            </div>
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>Día</th>
-                  <th>Plato más pedido</th>
-                  <th>Veces pedido</th>
-                  <th>Popularidad</th>
-                </tr>
-              </thead>
-              <tbody>
-                {platosPorDia.map((row, i) => (
-                  <tr key={i}>
-                    <td className="admin-td">{row.dia}</td>
-                    <td className="admin-td-normal">{row.plato}</td>
-                    <td className="admin-td-normal">{row.cantidad}</td>
-                    <td className="admin-td-normal">
-                      <div className="admin-progress-track" style={{ width: 120 }}>
-                        <div
-                          className="admin-progress-fill"
-                          style={{
-                            width: `${Math.min((row.cantidad / 10) * 100, 100)}%`,
-                            backgroundColor: COLORS[i % COLORS.length]
-                          }}
-                        />
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              <div className="admin-panel">
+                <div className="admin-panel-head">
+                  <div className="admin-panel-title">Plato más pedido por día de semana</div>
+                </div>
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Día</th>
+                      <th>Plato más pedido</th>
+                      <th>Veces pedido</th>
+                      <th>Popularidad</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {platosPorDia
+                      .filter(row => filtroPlato === '' || row.plato === filtroPlato)
+                      .map((row, i) => (
+                        <tr key={i}>
+                          <td className="admin-td">{row.dia}</td>
+                          <td className="admin-td-normal">{row.plato}</td>
+                          <td className="admin-td-normal">{row.cantidad}</td>
+                          <td className="admin-td-normal">
+                            <div className="admin-progress-track" style={{ width: 120 }}>
+                              <div
+                                className="admin-progress-fill"
+                                style={{
+                                  width: `${Math.min((row.cantidad / 10) * 100, 100)}%`,
+                                  backgroundColor: COLORS[i % COLORS.length]
+                                }}
+                              />
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
 
-          <div className="admin-panel">
-            <div className="admin-panel-head">
-              <div className="admin-panel-title">Plato más pedido por hora</div>
-            </div>
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>Hora</th>
-                  <th>Plato más pedido</th>
-                  <th>Veces pedido</th>
-                </tr>
-              </thead>
-              <tbody>
-                {platosPorHora.map((row, i) => (
-                  <tr key={i}>
-                    <td className="admin-td">{row.hora}</td>
-                    <td className="admin-td-normal">{row.plato}</td>
-                    <td className="admin-td-normal">{row.cantidad}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              <div className="admin-panel">
+                <div className="admin-panel-head">
+                  <div className="admin-panel-title">Plato más pedido por hora</div>
+                </div>
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Hora</th>
+                      <th>Plato más pedido</th>
+                      <th>Veces pedido</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {platosPorHora
+                      .filter(row => filtroPlato === '' || row.plato === filtroPlato)
+                      .map((row, i) => (
+                        <tr key={i}>
+                          <td className="admin-td">{row.hora}</td>
+                          <td className="admin-td-normal">{row.plato}</td>
+                          <td className="admin-td-normal">{row.cantidad}</td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+
+          {/* Tab Reservas */}
+          {tabActivo === 'reservas' && (
+            <>
+              {/* Filtro por rango */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
+                <label className="admin-form-label" style={{ margin: 0 }}>Período:</label>
+                <div className="admin-tabs" style={{ margin: 0 }}>
+                  {['semana', 'mes', 'personalizado'].map(r => (
+                    <button
+                      key={r}
+                      className={`admin-tab ${filtroRango === r ? 'activo' : ''}`}
+                      onClick={() => setFiltroRango(r)}
+                      style={{ fontSize: 12, padding: '5px 14px' }}
+                    >
+                      {r === 'semana' ? 'Última semana' : r === 'mes' ? 'Último mes' : 'Personalizado'}
+                    </button>
+                  ))}
+                </div>
+                {filtroRango === 'personalizado' && (
+                  <>
+                    <input
+                      type="date"
+                      className="admin-form-input"
+                      style={{ maxWidth: 160, padding: '5px 10px' }}
+                      value={filtroFechaDesde}
+                      onChange={(e) => setFiltroFechaDesde(e.target.value)}
+                    />
+                    <span style={{ color: '#6b7280', fontSize: 13 }}>hasta</span>
+                    <input
+                      type="date"
+                      className="admin-form-input"
+                      style={{ maxWidth: 160, padding: '5px 10px' }}
+                      value={filtroFechaHasta}
+                      onChange={(e) => setFiltroFechaHasta(e.target.value)}
+                    />
+                  </>
+                )}
+              </div>
+
+              <div className="admin-row2">
+                <div className="admin-panel">
+                  <div className="admin-panel-head">
+                    <div className="admin-panel-title">Reservas por día de semana</div>
+                  </div>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <BarChart data={reservasPorDia} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                      <XAxis dataKey="nombre" tick={{ fontSize: 11 }} />
+                      <YAxis tick={{ fontSize: 11 }} />
+                      <Tooltip />
+                      <Bar dataKey="reservas" fill="#7c3aed" radius={[4, 4, 0, 0]} name="Reservas" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="admin-panel">
+                  <div className="admin-panel-head">
+                    <div className="admin-panel-title">Reservas por hora de retiro</div>
+                  </div>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <BarChart data={reservasPorHora} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                      <XAxis dataKey="hora" tick={{ fontSize: 10 }} />
+                      <YAxis tick={{ fontSize: 11 }} />
+                      <Tooltip />
+                      <Bar dataKey="reservas" fill="#0891b2" radius={[4, 4, 0, 0]} name="Reservas" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </>
+          )}
 
         </main>
       </div>

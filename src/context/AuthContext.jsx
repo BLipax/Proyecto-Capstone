@@ -6,33 +6,46 @@ const AuthContext = createContext()
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [rol, setRol] = useState(null)
+  const [cargando, setCargando] = useState(true)
 
   const fetchRol = async (authUser) => {
     if (!authUser) { setRol(null); return }
-    const { data } = await supabase
-      .from('usuarios')
-      .select('id_rol')
-      .eq('auth_id', authUser.id)
-      .single()
-    if (data) setRol(data.id_rol)
+    try {
+      const { data } = await supabase
+        .from('usuarios')
+        .select('id_rol')
+        .eq('auth_id', authUser.id)
+        .single()
+      if (data) setRol(data.id_rol)
+    } catch (e) {
+      console.error('fetchRol error:', e)
+    }
   }
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setUser(data.session?.user ?? null)
-      fetchRol(data.session?.user ?? null)
+    // Timeout de seguridad — si no responde en 3s, desbloquea
+    const timeout = setTimeout(() => setCargando(false), 3000)
+
+    const { data: listener } = supabase.auth.onAuthStateChange(async (_e, session) => {
+      clearTimeout(timeout)
+      try {
+        setUser(session?.user ?? null)
+        await fetchRol(session?.user ?? null)
+      } catch (e) {
+        console.error('onAuthStateChange error:', e)
+      } finally {
+        setCargando(false)
+      }
     })
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_e, session) => {
-      setUser(session?.user ?? null)
-      fetchRol(session?.user ?? null)
-    })
-
-    return () => listener.subscription.unsubscribe()
+    return () => {
+      clearTimeout(timeout)
+      listener.subscription.unsubscribe()
+    }
   }, [])
 
   return (
-    <AuthContext.Provider value={{ user, rol }}>
+    <AuthContext.Provider value={{ user, rol, cargando }}>
       {children}
     </AuthContext.Provider>
   )
