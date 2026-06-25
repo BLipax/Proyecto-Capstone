@@ -16,9 +16,10 @@ const AdminReportes = () => {
   const [reservasPorHora, setReservasPorHora] = useState([])
   const [totalReservas, setTotalReservas] = useState(0)
   const [totalPlatos, setTotalPlatos] = useState(0)
+  const [platosPorDia, setPlatosPorDia] = useState([])
+  const [platosPorHora, setPlatosPorHora] = useState([])
 
   const fetchReportes = async () => {
-    // Platos más vendidos
     const { data: dataPlatosVendidos } = await supabase
       .from('reserva_platos')
       .select('id_plato, cantidad, platos ( nombre )')
@@ -29,14 +30,11 @@ const AdminReportes = () => {
         if (!conteo[id_plato]) conteo[id_plato] = { nombre: platos?.nombre, total: 0 }
         conteo[id_plato].total += cantidad
       })
-      const ordenados = Object.values(conteo)
-        .sort((a, b) => b.total - a.total)
-        .slice(0, 6)
+      const ordenados = Object.values(conteo).sort((a, b) => b.total - a.total).slice(0, 6)
       setPlatosMasVendidos(ordenados)
       setTotalPlatos(dataPlatosVendidos.reduce((acc, r) => acc + r.cantidad, 0))
     }
 
-    // Reservas por día de semana
     const { data: dataReservas } = await supabase
       .from('reservas')
       .select('fecha_reserva, estado')
@@ -44,7 +42,6 @@ const AdminReportes = () => {
 
     if (dataReservas) {
       setTotalReservas(dataReservas.length)
-
       const porDia = Array(7).fill(0)
       dataReservas.forEach(r => {
         const dia = new Date(r.fecha_reserva).getDay()
@@ -52,32 +49,87 @@ const AdminReportes = () => {
       })
       setReservasPorDia(
         DIAS.map((nombre, i) => ({ nombre: nombre.slice(0, 3), reservas: porDia[i] }))
-          .filter((_, i) => i >= 1 && i <= 5) // solo lunes a viernes
+          .filter((_, i) => i >= 1 && i <= 5)
       )
+    }
 
-      // Reservas por hora
-      const { data: dataHoras } = await supabase
-        .from('reservas')
-        .select('hora_retiro')
-        .neq('estado', 'cancelada')
+    const { data: dataHoras } = await supabase
+      .from('reservas')
+      .select('hora_retiro')
+      .neq('estado', 'cancelada')
 
-      if (dataHoras) {
-        const porHora = {}
-        dataHoras.forEach(r => {
-          const hora = r.hora_retiro?.slice(0, 5)
-          if (hora) porHora[hora] = (porHora[hora] || 0) + 1
-        })
-        const horasOrdenadas = Object.entries(porHora)
+    if (dataHoras) {
+      const porHora = {}
+      dataHoras.forEach(r => {
+        const hora = r.hora_retiro?.slice(0, 5)
+        if (hora) porHora[hora] = (porHora[hora] || 0) + 1
+      })
+      setReservasPorHora(
+        Object.entries(porHora)
           .sort((a, b) => a[0].localeCompare(b[0]))
           .map(([hora, reservas]) => ({ hora, reservas }))
-        setReservasPorHora(horasOrdenadas)
-      }
+      )
     }
+  }
+
+  const fetchPlatosPorDia = async () => {
+    const { data } = await supabase
+      .from('reservas')
+      .select(`fecha_reserva, reserva_platos ( platos ( nombre ) )`)
+      .neq('estado', 'cancelada')
+
+    if (!data) return
+
+    const porDia = {}
+    data.forEach(r => {
+      const dia = DIAS[new Date(r.fecha_reserva).getDay()]
+      const plato = r.reserva_platos?.[0]?.platos?.nombre
+      if (!plato || !dia) return
+      if (!porDia[dia]) porDia[dia] = {}
+      porDia[dia][plato] = (porDia[dia][plato] || 0) + 1
+    })
+
+    const resultado = DIAS.slice(1, 6).map(dia => {
+      if (!porDia[dia]) return { dia, plato: '—', cantidad: 0 }
+      const top = Object.entries(porDia[dia]).sort((a, b) => b[1] - a[1])[0]
+      return { dia, plato: top?.[0] ?? '—', cantidad: top?.[1] ?? 0 }
+    })
+
+    setPlatosPorDia(resultado)
+  }
+
+  const fetchPlatosPorHora = async () => {
+    const { data } = await supabase
+      .from('reservas')
+      .select(`hora_retiro, reserva_platos ( platos ( nombre ) )`)
+      .neq('estado', 'cancelada')
+
+    if (!data) return
+
+    const porHora = {}
+    data.forEach(r => {
+      const hora = r.hora_retiro?.slice(0, 5)
+      const plato = r.reserva_platos?.[0]?.platos?.nombre
+      if (!hora || !plato) return
+      if (!porHora[hora]) porHora[hora] = {}
+      porHora[hora][plato] = (porHora[hora][plato] || 0) + 1
+    })
+
+    const resultado = Object.entries(porHora)
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([hora, platos]) => {
+        const top = Object.entries(platos).sort((a, b) => b[1] - a[1])[0]
+        return { hora, plato: top?.[0] ?? '—', cantidad: top?.[1] ?? 0 }
+      })
+
+    setPlatosPorHora(resultado)
   }
 
   useEffect(() => {
     const init = async () => {
       await fetchReportes()
+      await fetchPlatosPorDia()
+      await fetchPlatosPorHora()
     }
     init()
   }, [])
@@ -92,7 +144,6 @@ const AdminReportes = () => {
 
         <main className="admin-content">
 
-          {/* Stats rápidas */}
           <div className="admin-stats-grid">
             <div className="admin-stat-card">
               <div className="admin-stat-top">
@@ -136,7 +187,6 @@ const AdminReportes = () => {
             </div>
           </div>
 
-          {/* Platos más vendidos + Pie */}
           <div className="admin-row2">
             <div className="admin-panel">
               <div className="admin-panel-head">
@@ -180,7 +230,6 @@ const AdminReportes = () => {
             </div>
           </div>
 
-          {/* Reservas por día + por hora */}
           <div className="admin-row2">
             <div className="admin-panel">
               <div className="admin-panel-head">
@@ -211,6 +260,66 @@ const AdminReportes = () => {
                 </BarChart>
               </ResponsiveContainer>
             </div>
+          </div>
+
+          <div className="admin-panel">
+            <div className="admin-panel-head">
+              <div className="admin-panel-title">Plato más pedido por día de semana</div>
+            </div>
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Día</th>
+                  <th>Plato más pedido</th>
+                  <th>Veces pedido</th>
+                  <th>Popularidad</th>
+                </tr>
+              </thead>
+              <tbody>
+                {platosPorDia.map((row, i) => (
+                  <tr key={i}>
+                    <td className="admin-td">{row.dia}</td>
+                    <td className="admin-td-normal">{row.plato}</td>
+                    <td className="admin-td-normal">{row.cantidad}</td>
+                    <td className="admin-td-normal">
+                      <div className="admin-progress-track" style={{ width: 120 }}>
+                        <div
+                          className="admin-progress-fill"
+                          style={{
+                            width: `${Math.min((row.cantidad / 10) * 100, 100)}%`,
+                            backgroundColor: COLORS[i % COLORS.length]
+                          }}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="admin-panel">
+            <div className="admin-panel-head">
+              <div className="admin-panel-title">Plato más pedido por hora</div>
+            </div>
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Hora</th>
+                  <th>Plato más pedido</th>
+                  <th>Veces pedido</th>
+                </tr>
+              </thead>
+              <tbody>
+                {platosPorHora.map((row, i) => (
+                  <tr key={i}>
+                    <td className="admin-td">{row.hora}</td>
+                    <td className="admin-td-normal">{row.plato}</td>
+                    <td className="admin-td-normal">{row.cantidad}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
 
         </main>

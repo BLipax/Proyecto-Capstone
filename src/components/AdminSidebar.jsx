@@ -23,16 +23,16 @@ const AdminSidebar = () => {
         <div className="admin-nav-section">
           <div className="admin-nav-label">Principal</div>
           <div className="admin-nav-item" onClick={() => navigate('/admin')}>📊 Resumen</div>
-          <div className="admin-nav-item">🍽️ Menú del día</div>
-          <div className="admin-nav-item">📅 Reservas</div>
+          <div className="admin-nav-item" onClick={() => navigate('/admin/menu-dia')}>🍽️ Menú del día</div>
+          <div className="admin-nav-item" onClick={() => navigate('/admin/reservas')}>📅 Reservas</div>
          <div className="admin-nav-item" onClick={() => navigate('/admin/usuarios')}>
       👥 Usuarios
     </div>
         </div>
         <div className="admin-nav-section">
           <div className="admin-nav-label">Gestión</div>
-          <div className="admin-nav-item">➕ Agregar plato</div>
-          <div className="admin-nav-item">✏️ Editar menú</div>
+          <div className="admin-nav-item" onClick={() => navigate('/admin/agregar-plato')}>➕ Agregar plato</div>
+          <div className="admin-nav-item" onClick={() => navigate('/admin/editar-menu')}>✏️ Editar menú</div>
           <div className="admin-nav-item" onClick={() => navigate('/admin/reportes')}>📈 Reportes</div>
         </div>
         <div className="admin-nav-section">
@@ -40,13 +40,13 @@ const AdminSidebar = () => {
           <div className="admin-nav-item">⚙️ Configuración</div>
         </div>
       </nav>
-      <div className="admin-sidebar-user">
-        <div className="admin-user-avatar">AD</div>
-        <div>
-          <div className="admin-user-name">Administrador</div>
-          <div className="admin-user-role">Super admin</div>
+        <div className="admin-sidebar-user" onClick={handleLogout} style={{ cursor: 'pointer' }} title="Cerrar sesión">
+          <div className="admin-user-avatar">AD</div>
+          <div>
+            <div className="admin-user-name">Administrador</div>
+            <div className="admin-user-role" style={{ color: '#f87171' }}>Cerrar sesión</div>
+          </div>
         </div>
-      </div>
       <div style={{ padding: '8px 10px', borderTop: '0.5px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', gap: 4 }}>
         <div className="admin-nav-item" onClick={() => navigate('/home')}>
           🏠 Volver al inicio

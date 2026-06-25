@@ -38,10 +38,15 @@ const Navbar = () => {
                   Mi perfil
                 </button>
                 {user && !user.email?.endsWith('@duocuc.cl') && (
-                <button className="nav-dropdown-item" onClick={() => { navigate('/admin'); setMenuAbierto(false) }}>
-                  ⚙️ Panel admin
-                </button>
-              )}
+                  <>
+                    <button className="nav-dropdown-item" onClick={() => { navigate('/admin'); setMenuAbierto(false) }}>
+                      ⚙️ Panel admin
+                    </button>
+                    <button className="nav-dropdown-item" onClick={() => { navigate('/mis-reservas'); setMenuAbierto(false) }}>
+                      📋 Mis reservas
+                    </button>
+                  </>
+                )}
               <hr className="nav-dropdown-divider" />
               <button className="nav-dropdown-item danger" onClick={handleLogout}>
                 Cerrar sesión

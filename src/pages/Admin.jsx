@@ -4,16 +4,6 @@ import './Admin.css'
 import AdminSidebar from '../components/AdminSidebar'
 
 export default function Admin() {
-  const [form, setForm] = useState({
-    nombre: '',
-    descripcion: '',
-    precio: '',
-    categoria: '',
-    disponible: 'S',
-  })
-  const [file, setFile] = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [mensaje, setMensaje] = useState(null)
   const [statsReales, setStatsReales] = useState({
     platosMenu: 0,
     reservasHoy: 0,
@@ -22,12 +12,6 @@ export default function Admin() {
   })
   const [reservasRecientes, setReservasRecientes] = useState([])
   const [topPlatos, setTopPlatos] = useState([])
-  const [platos, setPlatos] = useState([])
-  const [etiquetas, setEtiquetas] = useState([])
-  const [etiquetasSeleccionadas, setEtiquetasSeleccionadas] = useState([])
-  const [editando, setEditando] = useState(null)
-  const [etiquetasEdit, setEtiquetasEdit] = useState([])
-  const [formEtiqueta, setFormEtiqueta] = useState({ nombre: '', icono: '', color_bg: '', color_text: '' })
 
   const topDishes = [
     { nombre: 'Cazuela de vacuno', porcentaje: 38, color: '#2563eb' },
@@ -47,16 +31,6 @@ export default function Admin() {
   const chartData = [41, 53, 38, 62, 47, 55, 53]
   const maxChartValue = Math.max(...chartData)
   const days = ['L', 'M', 'X', 'J', 'V', 'L', 'M']
-
-  const fetchPlatos = async () => {
-    const { data } = await supabase.from('platos').select('*').order('id_plato', { ascending: false })
-    if (data) setPlatos(data)
-  }
-
-  const fetchEtiquetas = async () => {
-    const { data } = await supabase.from('etiquetas').select('*').order('nombre')
-    if (data) setEtiquetas(data)
-  }
 
   const fetchStats = async () => {
     const hoy = new Date().toISOString().split('T')[0]
@@ -110,120 +84,14 @@ export default function Admin() {
     setTopPlatos(ordenados)
   }
 
-  const handleEliminar = async (id_plato) => {
-    if (!confirm('¿Estás seguro de eliminar este plato?')) return
-    await supabase.from('reserva_platos').delete().eq('id_plato', id_plato)
-    await supabase.from('platos').delete().eq('id_plato', id_plato)
-    fetchStats()
-    fetchTopPlatos()
-    fetchReservasRecientes()
-    fetchPlatos()
-  }
-
-  const handleToggleDisponible = async (id_plato, estadoActual) => {
-    await supabase
-      .from('platos')
-      .update({ disponible: estadoActual === 'S' ? 'N' : 'S' })
-      .eq('id_plato', id_plato)
-    fetchStats()
-    fetchPlatos()
-  }
-
-  const handleEtiqueta = (etiqueta) => {
-    setEtiquetasSeleccionadas(prev =>
-      prev.includes(etiqueta) ? prev.filter(e => e !== etiqueta) : [...prev, etiqueta]
-    )
-  }
-
-  const handleEtiquetaEdit = (etiqueta) => {
-    setEtiquetasEdit(prev =>
-      prev.includes(etiqueta) ? prev.filter(e => e !== etiqueta) : [...prev, etiqueta]
-    )
-  }
-
-  const handleGuardarEtiquetas = async () => {
-    await supabase
-      .from('platos')
-      .update({ etiquetas: etiquetasEdit.join(',') })
-      .eq('id_plato', editando)
-    setEditando(null)
-    setEtiquetasEdit([])
-    fetchPlatos()
-  }
-
-  const handleEtiquetaFormChange = (e) => {
-    setFormEtiqueta({ ...formEtiqueta, [e.target.name]: e.target.value })
-  }
-
-  const handleAgregarEtiqueta = async () => {
-    if (!formEtiqueta.nombre || !formEtiqueta.icono || !formEtiqueta.color_bg || !formEtiqueta.color_text) return
-    await supabase.from('etiquetas').insert([formEtiqueta])
-    setFormEtiqueta({ nombre: '', icono: '', color_bg: '', color_text: '' })
-    fetchEtiquetas()
-  }
-
-  const handleEliminarEtiqueta = async (id_etiqueta) => {
-    if (!confirm('¿Eliminar esta etiqueta?')) return
-    await supabase.from('etiquetas').delete().eq('id_etiqueta', id_etiqueta)
-    fetchEtiquetas()
-  }
-
   useEffect(() => {
     const loadData = async () => {
       await fetchStats()
       await fetchReservasRecientes()
       await fetchTopPlatos()
-      await fetchPlatos()
-      await fetchEtiquetas()
     }
     loadData()
   }, [])
-
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value })
-  }
-
-  const handleFileChange = (e) => {
-    setFile(e.target.files[0])
-  }
-
-  const handleSubmit = async () => {
-    if (!form.nombre || !form.precio) {
-      setMensaje({ tipo: 'error', texto: 'Nombre y precio son obligatorios.' })
-      return
-    }
-    setLoading(true)
-    setMensaje(null)
-    let imageUrl = ''
-    if (file) {
-      const fileName = `${Date.now()}-${file.name}`
-      const { error: uploadError } = await supabase.storage.from('platos').upload(fileName, file)
-      if (uploadError) {
-        setMensaje({ tipo: 'error', texto: uploadError.message })
-        setLoading(false)
-        return
-      }
-      const { data } = supabase.storage.from('platos').getPublicUrl(fileName)
-      imageUrl = data.publicUrl
-    }
-    const { error } = await supabase.from('platos').insert([{
-      ...form,
-      precio: parseFloat(form.precio),
-      imagen_url: imageUrl,
-      etiquetas: etiquetasSeleccionadas.join(','),
-    }])
-    setLoading(false)
-    if (error) {
-      setMensaje({ tipo: 'error', texto: error.message })
-    } else {
-      setMensaje({ tipo: 'success', texto: '¡Plato agregado correctamente!' })
-      setForm({ nombre: '', descripcion: '', precio: '', categoria: '', disponible: 'S' })
-      setFile(null)
-      setEtiquetasSeleccionadas([])
-      fetchStats()
-      fetchPlatos()
-    }
-  }
 
   const stats = [
     { label: 'Platos en menú', valor: statsReales.platosMenu, icon: '🍽️' },
@@ -351,208 +219,6 @@ export default function Admin() {
                     </div>
                   </div>
                 ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="admin-panel">
-            <div className="admin-panel-head">
-              <div className="admin-panel-title">Agregar nuevo plato al menú</div>
-              <div className="admin-panel-sub">Los campos con * son obligatorios</div>
-            </div>
-            <div className="admin-form-grid">
-              <div className="admin-form-field-full">
-                <label className="admin-form-label">Nombre del plato *</label>
-                <input className="admin-form-input" name="nombre" value={form.nombre} onChange={handleChange} placeholder="Ej: Ensalada mediterránea" />
-              </div>
-              <div className="admin-form-field-full">
-                <label className="admin-form-label">Descripción</label>
-                <textarea className="admin-form-textarea" name="descripcion" value={form.descripcion} onChange={handleChange} placeholder="Descripción breve del plato..." />
-              </div>
-              <div className="admin-form-field">
-                <label className="admin-form-label">Precio (CLP) *</label>
-                <input className="admin-form-input" type="number" name="precio" value={form.precio} onChange={handleChange} placeholder="Ej: 4990" />
-              </div>
-              <div className="admin-form-field">
-                <label className="admin-form-label">Categoría</label>
-                <input className="admin-form-input" name="categoria" value={form.categoria} onChange={handleChange} placeholder="Ej: Ensaladas, Pastas..." />
-              </div>
-              <div className="admin-form-field">
-                <label className="admin-form-label">Disponibilidad</label>
-                <select className="admin-form-input" name="disponible" value={form.disponible} onChange={handleChange}>
-                  <option value="S">Disponible</option>
-                  <option value="N">No disponible</option>
-                </select>
-              </div>
-              <div className="admin-form-field">
-                <label className="admin-form-label">Imagen del plato</label>
-                <input type="file" accept="image/*" onChange={handleFileChange} className="admin-form-input" style={{ padding: '6px 10px' }} />
-              </div>
-              <div className="admin-form-field-full">
-                <label className="admin-form-label">Etiquetas</label>
-                <div className="admin-etiquetas">
-                  {etiquetas.map(({ nombre, icono }) => (
-                    <button
-                      key={nombre}
-                      type="button"
-                      onClick={() => handleEtiqueta(nombre)}
-                      className={`admin-etiqueta-btn ${etiquetasSeleccionadas.includes(nombre) ? 'activa' : ''}`}
-                    >
-                      {icono} {nombre}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              {mensaje && (
-                <div className={mensaje.tipo === 'success' ? 'admin-msg-success' : 'admin-msg-error'}>
-                  {mensaje.texto}
-                </div>
-              )}
-              <div className="admin-form-actions">
-                <button className="admin-btn-secondary" type="button">Cancelar</button>
-                <button className="admin-btn-primary" disabled={loading} onClick={handleSubmit}>
-                  {loading ? 'Guardando...' : '➕ Agregar plato'}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="admin-panel">
-            <div className="admin-panel-head">
-              <div className="admin-panel-title">Gestión de platos</div>
-              <div className="admin-panel-sub">{platos.length} platos registrados</div>
-            </div>
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>Nombre</th>
-                  <th>Categoría</th>
-                  <th>Precio</th>
-                  <th>Estado</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {platos.map((plato) => (
-                  <tr key={plato.id_plato}>
-                    <td className="admin-td">{plato.nombre}</td>
-                    <td className="admin-td-normal">{plato.categoria || '—'}</td>
-                    <td className="admin-td-normal">${plato.precio?.toLocaleString('es-CL')}</td>
-                    <td className="admin-td-normal">
-                      <span className={`admin-pill ${plato.disponible === 'S' ? 'admin-pill-verde' : 'admin-pill-rojo'}`}>
-                        {plato.disponible === 'S' ? 'Disponible' : 'No disponible'}
-                      </span>
-                    </td>
-                    <td className="admin-td-normal">
-                      <div className="admin-btn-actions">
-                        <button className="admin-btn-toggle" onClick={() => handleToggleDisponible(plato.id_plato, plato.disponible)}>
-                          {plato.disponible === 'S' ? 'Desactivar' : 'Activar'}
-                        </button>
-                        <button
-                          className="admin-btn-toggle"
-                          onClick={() => {
-                            setEditando(plato.id_plato)
-                            setEtiquetasEdit(plato.etiquetas ? plato.etiquetas.split(',').map(e => e.trim()) : [])
-                          }}
-                        >
-                          Etiquetas
-                        </button>
-                        <button className="admin-btn-eliminar" onClick={() => handleEliminar(plato.id_plato)}>
-                          Eliminar
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {editando && (
-            <div className="admin-panel">
-              <div className="admin-panel-head">
-                <div className="admin-panel-title">
-                  Editar etiquetas — {platos.find(p => p.id_plato === editando)?.nombre}
-                </div>
-                <button className="admin-btn-secondary" onClick={() => setEditando(null)}>
-                  Cancelar
-                </button>
-              </div>
-              <div className="admin-etiquetas" style={{ marginBottom: 16 }}>
-                {etiquetas.map(({ nombre, icono }) => (
-                  <button
-                    key={nombre}
-                    type="button"
-                    onClick={() => handleEtiquetaEdit(nombre)}
-                    className={`admin-etiqueta-btn ${etiquetasEdit.includes(nombre) ? 'activa' : ''}`}
-                  >
-                    {icono} {nombre}
-                  </button>
-                ))}
-              </div>
-              <button className="admin-btn-primary" onClick={handleGuardarEtiquetas}>
-                Guardar etiquetas
-              </button>
-            </div>
-          )}
-
-          <div className="admin-panel">
-            <div className="admin-panel-head">
-              <div className="admin-panel-title">Gestión de etiquetas</div>
-              <div className="admin-panel-sub">{etiquetas.length} etiquetas</div>
-            </div>
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>Icono</th>
-                  <th>Nombre</th>
-                  <th>Vista previa</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {etiquetas.map((e) => (
-                  <tr key={e.id_etiqueta}>
-                    <td className="admin-td">{e.icono}</td>
-                    <td className="admin-td">{e.nombre}</td>
-                    <td className="admin-td-normal">
-                      <span style={{ background: e.color_bg, color: e.color_text, padding: '2px 8px', borderRadius: 9999, fontSize: 11, fontWeight: 600 }}>
-                        {e.icono} {e.nombre}
-                      </span>
-                    </td>
-                    <td className="admin-td-normal">
-                      <button className="admin-btn-eliminar" onClick={() => handleEliminarEtiqueta(e.id_etiqueta)}>
-                        Eliminar
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <div style={{ marginTop: 16 }}>
-              <div className="admin-panel-title" style={{ marginBottom: 10 }}>Agregar etiqueta</div>
-              <div className="admin-form-grid">
-                <div className="admin-form-field">
-                  <label className="admin-form-label">Nombre</label>
-                  <input className="admin-form-input" name="nombre" value={formEtiqueta.nombre} onChange={handleEtiquetaFormChange} placeholder="Ej: sin azúcar" />
-                </div>
-                <div className="admin-form-field">
-                  <label className="admin-form-label">Icono (emoji)</label>
-                  <input className="admin-form-input" name="icono" value={formEtiqueta.icono} onChange={handleEtiquetaFormChange} placeholder="Ej: 🍬" />
-                </div>
-                <div className="admin-form-field">
-                  <label className="admin-form-label">Color fondo (hex)</label>
-                  <input className="admin-form-input" name="color_bg" value={formEtiqueta.color_bg} onChange={handleEtiquetaFormChange} placeholder="Ej: #EAF3DE" />
-                </div>
-                <div className="admin-form-field">
-                  <label className="admin-form-label">Color texto (hex)</label>
-                  <input className="admin-form-input" name="color_text" value={formEtiqueta.color_text} onChange={handleEtiquetaFormChange} placeholder="Ej: #27500A" />
-                </div>
-                <div className="admin-form-actions">
-                  <button className="admin-btn-primary" onClick={handleAgregarEtiqueta}>
-                    Agregar etiqueta
-                  </button>
-                </div>
               </div>
             </div>
           </div>

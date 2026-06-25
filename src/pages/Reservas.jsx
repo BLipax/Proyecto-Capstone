@@ -1,72 +1,83 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../services/supabaseClient'
 import { useAuth } from '../context/useAuth'
+import { useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import './Reservas.css'
 
-const HORAS = ['12:00', '12:15', '12:30', '12:45', '13:00', '13:15', '13:30', '13:45', '14:00']
+const HORAS = ['12:30', '13:00', '13:30', '14:00', '14:30', '15:00']
 
 const Reservas = () => {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [platos, setPlatos] = useState([])
-  const [reservas, setReservas] = useState([])
   const [idUsuario, setIdUsuario] = useState(null)
-  const [form, setForm] = useState({ id_plato: '', fecha: '', hora: '', cantidad: 1 })
+  const [busqueda, setBusqueda] = useState('')
+  const [platoSeleccionado, setPlatoSeleccionado] = useState(null)
+  const [fecha, setFecha] = useState('')
+  const [hora, setHora] = useState('')
+  const [cantidad, setCantidad] = useState(1)
   const [loading, setLoading] = useState(false)
   const [mensaje, setMensaje] = useState(null)
+  const [badgeConfig, setBadgeConfig] = useState({})
 
-  const fetchPlatos = async () => {
-  const { data } = await supabase.from('platos').select('*').eq('disponible', 'S')
-  if (data) setPlatos(data)
-}
+  useEffect(() => {
+    if (!user) { navigate('/'); return }
+    const init = async () => {
+      const { data: platosData } = await supabase
+        .from('platos')
+        .select('*')
+        .eq('disponible', 'S')
+      if (platosData) setPlatos(platosData)
 
-const fetchReservas = async (id) => {
-  const { data } = await supabase
-    .from('reservas')
-    .select(`
-      id_reserva,
-      fecha_reserva,
-      hora_retiro,
-      estado,
-      reserva_platos (
-        cantidad,
-        platos ( nombre, precio )
-      )
-    `)
-    .eq('id_usuario', id)
-    .order('fecha_reserva', { ascending: false })
-  if (data) setReservas(data)
-}
+      const { data: userData } = await supabase
+        .from('usuarios')
+        .select('id_usuario')
+        .eq('auth_id', user.id)
+        .single()
+      if (userData) setIdUsuario(userData.id_usuario)
 
-useEffect(() => {
-  const init = async () => {
-    await fetchPlatos()
-
-    if (!user) return
-
-    const { data } = await supabase
-      .from('usuarios')
-      .select('id_usuario')
-      .eq('auth_id', user.id)
-      .single()
-
-    if (data) {
-      setIdUsuario(data.id_usuario)
-      await fetchReservas(data.id_usuario)
+      const { data: etiquetasData } = await supabase.from('etiquetas').select('*')
+      if (etiquetasData) {
+        const config = {}
+        etiquetasData.forEach(e => {
+          config[e.nombre] = { bg: e.color_bg, color: e.color_text, icon: e.icono }
+        })
+        setBadgeConfig(config)
+      }
     }
+    init()
+  }, [user])
+
+  const platosFiltrados = platos.filter(p =>
+    p.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
+    p.categoria?.toLowerCase().includes(busqueda.toLowerCase())
+  )
+
+  const getDiasDisponibles = () => {
+    const dias = []
+    const hoy = new Date()
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(hoy)
+      d.setDate(hoy.getDate() + i)
+      const diaSemana = d.getDay()
+      if (diaSemana !== 0 && diaSemana !== 6) {
+        dias.push(d)
+      }
+    }
+    return dias
   }
 
-  init()
-}, [user])
+  const formatFecha = (date) => date.toISOString().split('T')[0]
 
-
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value })
+  const formatDia = (date) => {
+    const dias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+    return dias[date.getDay()]
   }
 
   const handleReservar = async () => {
-    if (!form.id_plato || !form.fecha || !form.hora) {
-      setMensaje({ tipo: 'error', texto: 'Completa todos los campos.' })
+    if (!platoSeleccionado || !fecha || !hora) {
+      setMensaje({ tipo: 'error', texto: 'Selecciona un plato, fecha y hora.' })
       return
     }
     if (!idUsuario) {
@@ -79,8 +90,8 @@ useEffect(() => {
     const { data: reserva, error: errReserva } = await supabase
       .from('reservas')
       .insert([{
-        fecha_reserva: form.fecha,
-        hora_retiro: form.hora,
+        fecha_reserva: fecha,
+        hora_retiro: hora,
         estado: 'pendiente',
         id_usuario: idUsuario,
       }])
@@ -97,8 +108,8 @@ useEffect(() => {
       .from('reserva_platos')
       .insert([{
         id_reserva: reserva.id_reserva,
-        id_plato: parseInt(form.id_plato),
-        cantidad: parseInt(form.cantidad),
+        id_plato: platoSeleccionado.id_plato,
+        cantidad,
       }])
 
     setLoading(false)
@@ -106,119 +117,154 @@ useEffect(() => {
       setMensaje({ tipo: 'error', texto: 'Error al agregar el plato.' })
     } else {
       setMensaje({ tipo: 'exito', texto: '¡Reserva creada correctamente!' })
-      setForm({ id_plato: '', fecha: '', hora: '', cantidad: 1 })
-      fetchReservas(idUsuario)
+      setPlatoSeleccionado(null)
+      setFecha('')
+      setHora('')
+      setCantidad(1)
     }
   }
 
-  const handleCancelar = async (id_reserva) => {
-    await supabase
-      .from('reservas')
-      .update({ estado: 'cancelada' })
-      .eq('id_reserva', id_reserva)
-    fetchReservas(idUsuario)
-  }
-
-  const estadoStyle = (estado) => {
-    if (estado === 'pendiente') return 'badge pendiente'
-    if (estado === 'cancelada') return 'badge cancelada'
-    if (estado === 'lista') return 'badge lista'
-    return 'badge'
-  }
+  const diasDisponibles = getDiasDisponibles()
 
   return (
-    <div className="reservas-page">
+    <div className="res-page">
       <Navbar />
-      <div className="reservas-container">
+      <div className="res-container">
+        <h1 className="res-title">Nueva reserva</h1>
 
-        <div className="reservas-form-card">
-          <h2 className="reservas-title">Nueva reserva</h2>
-
-          <div className="reservas-field">
-            <label className="reservas-label">Plato</label>
-            <select className="reservas-input" name="id_plato" value={form.id_plato} onChange={handleChange}>
-              <option value="">Selecciona un plato</option>
-              {platos.map(p => (
-                <option key={p.id_plato} value={p.id_plato}>
-                  {p.nombre} — ${p.precio}
-                </option>
-              ))}
-            </select>
+        <div className="res-section">
+          <div className="res-section-head">
+            <span className="res-step">1</span>
+            <h2 className="res-section-title">Elige tu plato</h2>
           </div>
-
-          <div className="reservas-row">
-            <div className="reservas-field">
-              <label className="reservas-label">Fecha</label>
-              <input
-                className="reservas-input"
-                type="date"
-                name="fecha"
-                value={form.fecha}
-                onChange={handleChange}
-                min={new Date().toISOString().split('T')[0]}
-                onKeyDown={(e) => e.preventDefault()}
-              />
-            </div>
-            <div className="reservas-field">
-              <label className="reservas-label">Hora de retiro</label>
-              <select className="reservas-input" name="hora" value={form.hora} onChange={handleChange}>
-                <option value="">Selecciona hora</option>
-                {HORAS.map(h => <option key={h} value={h}>{h}</option>)}
-              </select>
-            </div>
-            <div className="reservas-field">
-              <label className="reservas-label">Cantidad</label>
-              <input
-                className="reservas-input"
-                type="number"
-                name="cantidad"
-                value={form.cantidad}
-                onChange={handleChange}
-                min="1"
-                max="10"
-              />
-            </div>
-          </div>
-
-          {mensaje && (
-            <p className={mensaje.tipo === 'exito' ? 'reservas-exito' : 'reservas-error'}>
-              {mensaje.texto}
-            </p>
-          )}
-
-          <button className="reservas-btn" onClick={handleReservar} disabled={loading}>
-            {loading ? 'Reservando...' : 'Confirmar reserva'}
-          </button>
-        </div>
-
-        <div className="reservas-historial">
-          <h2 className="reservas-title">Mis reservas</h2>
-          {reservas.length === 0 ? (
-            <p className="reservas-empty">No tienes reservas aún.</p>
-          ) : (
-            reservas.map(r => (
-              <div key={r.id_reserva} className="reserva-card">
-                <div className="reserva-card-header">
-                  <div>
-                    <p className="reserva-plato">
-                      {r.reserva_platos?.[0]?.platos?.nombre ?? 'Plato no encontrado'}
-                    </p>
-                    <p className="reserva-info">
-                      {new Date(r.fecha_reserva).toLocaleDateString('es-CL')} · {r.hora_retiro} · x{r.reserva_platos?.[0]?.cantidad}
-                    </p>
-                  </div>
-                  <span className={estadoStyle(r.estado)}>{r.estado}</span>
+          <input
+            className="res-buscador"
+            type="text"
+            placeholder="Buscar por nombre o categoría..."
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+          />
+          <div className="res-platos-lista">
+            {platosFiltrados.map(plato => (
+              <div
+                key={plato.id_plato}
+                className={`res-plato-item ${platoSeleccionado?.id_plato === plato.id_plato ? 'seleccionado' : ''}`}
+                onClick={() => setPlatoSeleccionado(plato)}
+              >
+                {plato.imagen_url ? (
+                  <img src={plato.imagen_url} alt={plato.nombre} className="res-plato-img" />
+                ) : (
+                  <div className="res-plato-img-placeholder">🍽️</div>
+                )}
+                <div className="res-plato-info">
+                  <p className="res-plato-nombre">{plato.nombre}</p>
+                  {plato.categoria && <p className="res-plato-cat">{plato.categoria}</p>}
+                  <p className="res-plato-desc">{plato.descripcion}</p>
+                  {plato.etiquetas && (
+                    <div className="res-plato-etiquetas">
+                      {plato.etiquetas.split(',').map(tag => {
+                        const t = tag.trim()
+                        const cfg = badgeConfig[t]
+                        if (!cfg) return null
+                        return (
+                          <span key={t} className="res-plato-etiqueta" style={{ background: cfg.bg, color: cfg.color }}>
+                            {cfg.icon} {t}
+                          </span>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
-                {r.estado === 'pendiente' && (
-                  <button className="reserva-cancelar" onClick={() => handleCancelar(r.id_reserva)}>
-                    Cancelar
-                  </button>
+                <div className="res-plato-precio">${plato.precio?.toLocaleString('es-CL')}</div>
+                {platoSeleccionado?.id_plato === plato.id_plato && (
+                  <div className="res-plato-check">✓</div>
                 )}
               </div>
-            ))
-          )}
+            ))}
+          </div>
         </div>
 
+        <div className="res-section">
+          <div className="res-section-head">
+            <span className="res-step">2</span>
+            <h2 className="res-section-title">Elige la fecha</h2>
+          </div>
+          <div className="res-fechas">
+            {diasDisponibles.map((d, i) => {
+              const f = formatFecha(d)
+              const esHoy = i === 0
+              return (
+                <button
+                  key={f}
+                  className={`res-fecha-btn ${fecha === f ? 'activo' : ''}`}
+                  onClick={() => setFecha(f)}
+                >
+                  <span className="res-fecha-dia">{formatDia(d)}</span>
+                  <span className="res-fecha-num">{d.getDate()}</span>
+                  {esHoy && <span className="res-fecha-hoy">Hoy</span>}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        <div className="res-section">
+          <div className="res-section-head">
+            <span className="res-step">3</span>
+            <h2 className="res-section-title">Elige la hora de retiro</h2>
+          </div>
+          <div className="res-horas">
+            {HORAS.map(h => (
+              <button
+                key={h}
+                className={`res-hora-btn ${hora === h ? 'activo' : ''}`}
+                onClick={() => setHora(h)}
+              >
+                {h}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="res-section">
+          <div className="res-section-head">
+            <span className="res-step">4</span>
+            <h2 className="res-section-title">Cantidad</h2>
+          </div>
+          <div className="res-cantidad">
+            <button className="res-cantidad-btn" onClick={() => setCantidad(c => Math.max(1, c - 1))}>−</button>
+            <span className="res-cantidad-num">{cantidad}</span>
+            <button className="res-cantidad-btn" onClick={() => setCantidad(c => Math.min(10, c + 1))}>+</button>
+          </div>
+        </div>
+
+        {platoSeleccionado && fecha && hora && (
+          <div className="res-resumen">
+            <h3 className="res-resumen-title">Resumen de tu reserva</h3>
+            <div className="res-resumen-content">
+              {platoSeleccionado.imagen_url && (
+                <img src={platoSeleccionado.imagen_url} alt={platoSeleccionado.nombre} className="res-resumen-img" />
+              )}
+              <div>
+                <p className="res-resumen-plato">{platoSeleccionado.nombre}</p>
+                <p className="res-resumen-detalle">📅 {new Date(fecha + 'T12:00:00').toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+                <p className="res-resumen-detalle">⏰ Retiro a las {hora}</p>
+                <p className="res-resumen-detalle">🍽️ {cantidad} unidad{cantidad > 1 ? 'es' : ''}</p>
+                <p className="res-resumen-precio">${(platoSeleccionado.precio * cantidad).toLocaleString('es-CL')}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {mensaje && (
+          <p className={mensaje.tipo === 'exito' ? 'res-exito' : 'res-error'}>
+            {mensaje.texto}
+          </p>
+        )}
+
+        <button className="res-btn" onClick={handleReservar} disabled={loading}>
+          {loading ? 'Reservando...' : 'Confirmar reserva'}
+        </button>
       </div>
     </div>
   )
