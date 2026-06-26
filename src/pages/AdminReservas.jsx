@@ -21,6 +21,7 @@ const AdminReservas = () => {
         reserva_platos ( cantidad, platos ( nombre ) )
       `)
       .order('fecha_reserva', { ascending: false })
+      .order('id_reserva', { ascending: false })
 
     if (filtroFecha) query = query.eq('fecha_reserva', filtroFecha)
     if (filtroEstado) query = query.eq('estado', filtroEstado)
