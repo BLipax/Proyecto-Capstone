@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { supabase } from '../services/supabaseClient'
 import './Admin.css'
 import AdminSidebar from '../components/AdminSidebar'
@@ -231,29 +232,24 @@ const fetchReservasSemana = async () => {
 
           <div className="admin-row2">
             <div className="admin-panel">
-              <div className="admin-panel-head">
-                <div className="admin-panel-title">Reservas por día (últimas 2 semanas)</div>
-              </div>
-              <div className="admin-chart-bars">
-                {reservasSemana.map((item, i) => {
-                  const max = Math.max(...reservasSemana.map(r => r.reservas), 1)
-                  return (
-                    <div key={i} className="admin-bar-group">
-                      <div
-                        className="admin-bar"
-                        style={{ height: `${(item.reservas / max) * 120}px` }}
-                        title={`${item.dia}: ${item.reservas} reservas`}
-                      />
-                    </div>
-                  )
-                })}
+                <div className="admin-panel-head">
+                  <div className="admin-panel-title">Reservas por día (±7 días)</div>
+                </div>
+                <ResponsiveContainer width="100%" height={200}>
+                  <BarChart data={reservasSemana} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                    <XAxis dataKey="dia" tick={{ fontSize: 10 }} />
+                    <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                    <Tooltip />
+                    <Bar dataKey="reservas" fill="#2563eb" radius={[4, 4, 0, 0]} name="Reservas" />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
               <div className="admin-chart-labels">
                 {reservasSemana.map((item, i) => (
                   <div key={i} className="admin-chart-label">{item.dia}</div>
                 ))}
               </div>
-            </div>
 
             <div className="admin-panel">
               <div className="admin-panel-head">
