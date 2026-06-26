@@ -83,10 +83,17 @@ export default function Admin() {
     const desde = hace14.toISOString().split('T')[0]
 
     const { data } = await supabase
-      .from('reservas')
-      .select('fecha_reserva')
-      .neq('estado', 'cancelada')
-      .gte('fecha_reserva', desde)
+    .from('reservas')
+    .select(`
+      id_reserva,
+      estado,
+      fecha_reserva,
+      hora_retiro,
+      usuarios ( email ),
+      reserva_platos ( platos ( nombre ) )
+  `)
+  .order('fecha_reserva', { ascending: false })
+  .limit(5)
 
     if (!data) return
 
