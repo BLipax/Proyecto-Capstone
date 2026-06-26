@@ -77,25 +77,18 @@ export default function Admin() {
   }
 
   const fetchReservasSemana = async () => {
-    const hoy = new Date()
-    const hace14 = new Date(hoy)
-    hace14.setDate(hoy.getDate() - 14)
-    const desde = hace14.toISOString().split('T')[0]
+  const hoy = new Date()
+  const hace14 = new Date(hoy)
+  hace14.setDate(hoy.getDate() - 14)
+  const desde = hace14.toISOString().split('T')[0]
 
-    const { data } = await supabase
+  const { data } = await supabase
     .from('reservas')
-    .select(`
-      id_reserva,
-      estado,
-      fecha_reserva,
-      hora_retiro,
-      usuarios ( email ),
-      reserva_platos ( platos ( nombre ) )
-  `)
-  .order('fecha_reserva', { ascending: false })
-  .limit(5)
+    .select('fecha_reserva')
+    .neq('estado', 'cancelada')
+    .gte('fecha_reserva', desde)
 
-    if (!data) return
+  if (!data) return
 
     const conteo = {}
     data.forEach(r => {
