@@ -19,7 +19,7 @@ const Menu = () => {
     const fetchData = async () => {
       const { data: platosData } = await supabase
         .from('platos')
-        .select('*')
+        .select('*, resenas(calificacion)')
         .eq('disponible', 'S')
         .order('nombre')
 
