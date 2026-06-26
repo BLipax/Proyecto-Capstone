@@ -57,7 +57,9 @@ export default function Admin() {
   }
 
   const fetchTopPlatos = async () => {
-    const { data } = await supabase.from('reserva_platos').select('id_plato, platos ( nombre )')
+    const { data } = await supabase
+      .from('reserva_platos')
+      .select('id_plato, platos ( nombre )')
     if (!data) return
     const conteo = {}
     data.forEach(({ id_plato, platos }) => {
@@ -77,18 +79,18 @@ export default function Admin() {
   }
 
   const fetchReservasSemana = async () => {
-  const hoy = new Date()
-  const hace14 = new Date(hoy)
-  hace14.setDate(hoy.getDate() - 14)
-  const desde = hace14.toISOString().split('T')[0]
+    const hoy = new Date()
+    const hace14 = new Date(hoy)
+    hace14.setDate(hoy.getDate() - 14)
+    const desde = hace14.toISOString().split('T')[0]
 
-  const { data } = await supabase
-    .from('reservas')
-    .select('fecha_reserva')
-    .neq('estado', 'cancelada')
-    .gte('fecha_reserva', desde)
+    const { data } = await supabase
+      .from('reservas')
+      .select('fecha_reserva')
+      .neq('estado', 'cancelada')
+      .gte('fecha_reserva', desde)
 
-  if (!data) return
+    if (!data) return
 
     const conteo = {}
     data.forEach(r => {
@@ -112,27 +114,31 @@ export default function Admin() {
   const fetchActividad = async () => {
     const eventos = []
 
-    // Últimas reservas
     const { data: reservas } = await supabase
       .from('reservas')
-      .select('id_reserva, estado, fecha_reserva, created_at, usuarios ( email ), reserva_platos ( platos ( nombre ) )')
-      .order('created_at', { ascending: false })
+      .select(`
+        id_reserva,
+        estado,
+        fecha_reserva,
+        hora_retiro,
+        usuarios ( email ),
+        reserva_platos ( platos ( nombre ) )
+      `)
+      .order('fecha_reserva', { ascending: false })
       .limit(5)
 
     if (reservas) {
       reservas.forEach(r => {
         const usuario = r.usuarios?.email?.split('@')[0] ?? 'Usuario'
         const plato = r.reserva_platos?.[0]?.platos?.nombre ?? 'un plato'
-        const tiempo = formatTiempo(r.created_at)
         if (r.estado === 'cancelada') {
-          eventos.push({ tipo: 'error', titulo: 'Reserva cancelada:', texto: `${usuario} canceló ${plato}`, tiempo })
+          eventos.push({ tipo: 'error', titulo: 'Reserva cancelada:', texto: `${usuario} canceló ${plato}`, tiempo: r.fecha_reserva })
         } else {
-          eventos.push({ tipo: 'info', titulo: 'Nueva reserva:', texto: `${usuario} reservó ${plato}`, tiempo })
+          eventos.push({ tipo: 'info', titulo: 'Nueva reserva:', texto: `${usuario} reservó ${plato}`, tiempo: r.fecha_reserva })
         }
       })
     }
 
-    // Últimos platos agregados
     const { data: platos } = await supabase
       .from('platos')
       .select('nombre, created_at, disponible')
@@ -141,17 +147,14 @@ export default function Admin() {
 
     if (platos) {
       platos.forEach(p => {
-        const tiempo = formatTiempo(p.created_at)
         if (p.disponible === 'S') {
-          eventos.push({ tipo: 'success', titulo: 'Plato agregado:', texto: `${p.nombre} al menú`, tiempo })
+          eventos.push({ tipo: 'success', titulo: 'Plato agregado:', texto: `${p.nombre} al menú`, tiempo: p.created_at })
         } else {
-          eventos.push({ tipo: 'warning', titulo: 'Plato desactivado:', texto: p.nombre, tiempo })
+          eventos.push({ tipo: 'warning', titulo: 'Plato desactivado:', texto: p.nombre, tiempo: p.created_at })
         }
       })
     }
 
-    // Ordenar por tiempo más reciente
-    eventos.sort((a, b) => new Date(b.tiempo) - new Date(a.tiempo))
     setActividad(eventos.slice(0, 6))
   }
 
@@ -307,7 +310,7 @@ export default function Admin() {
                     <div className="admin-act-dot" style={{ backgroundColor: getActivityColor(act.tipo) }} />
                     <div>
                       <div className="admin-act-text"><strong>{act.titulo}</strong> {act.texto}</div>
-                      <div className="admin-act-time">{act.tiempo}</div>
+                      <div className="admin-act-time">{formatTiempo(act.tiempo)}</div>
                     </div>
                   </div>
                 )) : (
