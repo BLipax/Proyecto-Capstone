@@ -96,11 +96,11 @@ const fetchReservasSemana = async () => {
     .lte('fecha_reserva', hasta)
 
   if (!data) return
-
-  const conteo = {}
-  data.forEach(r => {
-    conteo[r.fecha_reserva] = (conteo[r.fecha_reserva] || 0) + 1
-  })
+ const conteo = {} 
+ data.forEach(r => {
+  const fecha = r.fecha_reserva.split('T')[0]  // ← agregar .split('T')[0]
+  conteo[fecha] = (conteo[fecha] || 0) + 1
+})
 
   const resultado = []
   for (let i = -7; i <= 7; i++) {
@@ -247,11 +247,6 @@ const fetchReservasSemana = async () => {
                     <Bar dataKey="reservas" fill="#2563eb" radius={[4, 4, 0, 0]} name="Reservas" />
                   </BarChart>
                 </ResponsiveContainer>
-              </div>
-              <div className="admin-chart-labels">
-                {reservasSemana.map((item, i) => (
-                  <div key={i} className="admin-chart-label">{item.dia}</div>
-                ))}
               </div>
 
             <div className="admin-panel">
