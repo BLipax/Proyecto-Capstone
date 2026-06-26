@@ -113,6 +113,9 @@ const fetchReservasSemana = async () => {
     resultado.push({ dia: `${dias[diaSemana]} ${d.getDate()}`, reservas: conteo[fecha] || 0 })
   }
 
+  console.log('data reservas:', data)
+  console.log('conteo:', conteo)
+  console.log('resultado:', resultado)
   setReservasSemana(resultado)
   }
 
