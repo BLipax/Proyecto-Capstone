@@ -78,37 +78,41 @@ export default function Admin() {
     setTopPlatos(ordenados)
   }
 
-  const fetchReservasSemana = async () => {
-    const hoy = new Date()
-    const hace14 = new Date(hoy)
-    hace14.setDate(hoy.getDate() - 14)
-    const desde = hace14.toISOString().split('T')[0]
+const fetchReservasSemana = async () => {
+  const hoy = new Date()
+  const hace7 = new Date(hoy)
+  const en7 = new Date(hoy)
+  hace7.setDate(hoy.getDate() - 7)
+  en7.setDate(hoy.getDate() + 7)
+  const desde = hace7.toISOString().split('T')[0]
+  const hasta = en7.toISOString().split('T')[0]
 
-    const { data } = await supabase
-      .from('reservas')
-      .select('fecha_reserva')
-      .neq('estado', 'cancelada')
-      .gte('fecha_reserva', desde)
+  const { data } = await supabase
+    .from('reservas')
+    .select('fecha_reserva')
+    .neq('estado', 'cancelada')
+    .gte('fecha_reserva', desde)
+    .lte('fecha_reserva', hasta)
 
-    if (!data) return
+  if (!data) return
 
-    const conteo = {}
-    data.forEach(r => {
-      conteo[r.fecha_reserva] = (conteo[r.fecha_reserva] || 0) + 1
-    })
+  const conteo = {}
+  data.forEach(r => {
+    conteo[r.fecha_reserva] = (conteo[r.fecha_reserva] || 0) + 1
+  })
 
-    const resultado = []
-    for (let i = 13; i >= 0; i--) {
-      const d = new Date(hoy)
-      d.setDate(hoy.getDate() - i)
-      const diaSemana = d.getDay()
-      if (diaSemana === 0 || diaSemana === 6) continue
-      const fecha = d.toISOString().split('T')[0]
-      const dias = ['D', 'L', 'M', 'X', 'J', 'V', 'S']
-      resultado.push({ dia: dias[diaSemana], reservas: conteo[fecha] || 0 })
-    }
+  const resultado = []
+  for (let i = -7; i <= 7; i++) {
+    const d = new Date(hoy)
+    d.setDate(hoy.getDate() + i)
+    const diaSemana = d.getDay()
+    if (diaSemana === 0 || diaSemana === 6) continue
+    const fecha = d.toISOString().split('T')[0]
+    const dias = ['D', 'L', 'M', 'X', 'J', 'V', 'S']
+    resultado.push({ dia: `${dias[diaSemana]} ${d.getDate()}`, reservas: conteo[fecha] || 0 })
+  }
 
-    setReservasSemana(resultado)
+  setReservasSemana(resultado)
   }
 
   const fetchActividad = async () => {
