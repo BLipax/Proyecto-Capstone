@@ -151,7 +151,7 @@ const Menu = () => {
                   </div>
                   <div className="menu-card-footer">
                     <p className="menu-card-price">${plato.precio?.toLocaleString('es-CL')}</p>
-                    <button className="menu-btn" onClick={() => navigate('/reservas')}>
+                    <button className="menu-btn" onClick={() => navigate('/reservas', { state: { plato } })}>
                       Reservar
                     </button>
                   </div>

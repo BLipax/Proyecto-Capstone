@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../services/supabaseClient'
 import { useAuth } from '../context/useAuth'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import './Reservas.css'
 
@@ -10,7 +10,9 @@ const HORAS = ['12:30', '13:00', '13:30', '14:00', '14:30', '15:00']
 const Reservas = () => {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const [platos, setPlatos] = useState([])
+  const [sinMenu, setSinMenu] = useState(false)
   const [idUsuario, setIdUsuario] = useState(null)
   const [busqueda, setBusqueda] = useState('')
   const [platoSeleccionado, setPlatoSeleccionado] = useState(null)
@@ -23,13 +25,8 @@ const Reservas = () => {
 
   useEffect(() => {
     if (!user) { navigate('/'); return }
-    const init = async () => {
-      const { data: platosData } = await supabase
-        .from('platos')
-        .select('*')
-        .eq('disponible', 'S')
-      if (platosData) setPlatos(platosData)
 
+    const init = async () => {
       const { data: userData } = await supabase
         .from('usuarios')
         .select('id_usuario')
@@ -45,9 +42,54 @@ const Reservas = () => {
         })
         setBadgeConfig(config)
       }
+
+      if (location.state?.plato) {
+        const platoNav = location.state.plato
+        setPlatoSeleccionado(platoNav)
+        const hoy = new Date().toISOString().split('T')[0]
+        const { data: menuData } = await supabase
+          .from('menu_dia')
+          .select('fecha, platos(*, resenas(calificacion))')
+          .eq('id_plato', platoNav.id_plato)
+          .gte('fecha', hoy)
+          .order('fecha', { ascending: true })
+          .limit(1)
+        if (menuData && menuData.length > 0) {
+          const fechaDisponible = menuData[0].fecha
+          setFecha(fechaDisponible)
+          const { data: platosDelDia } = await supabase
+            .from('menu_dia')
+            .select('*, platos(*, resenas(calificacion))')
+            .eq('fecha', fechaDisponible)
+          if (platosDelDia && platosDelDia.length > 0) {
+            setPlatos(platosDelDia.map(m => m.platos))
+          }
+        }
+      }
     }
+
     init()
   }, [user])
+
+  const fetchPlatosDelDia = async (fechaSeleccionada) => {
+    setSinMenu(false)
+    setPlatos([])
+    const { data } = await supabase
+      .from('menu_dia')
+      .select('*, platos(*, resenas(calificacion))')
+      .eq('fecha', fechaSeleccionada)
+    if (data && data.length > 0) {
+      setPlatos(data.map(m => m.platos))
+    } else {
+      setSinMenu(true)
+    }
+  }
+
+  const handleFecha = (f) => {
+    setFecha(f)
+    fetchPlatosDelDia(f)
+    setPlatoSeleccionado(null)
+  }
 
   const platosFiltrados = platos.filter(p =>
     p.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
@@ -61,9 +103,7 @@ const Reservas = () => {
       const d = new Date(hoy)
       d.setDate(hoy.getDate() + i)
       const diaSemana = d.getDay()
-      if (diaSemana !== 0 && diaSemana !== 6) {
-        dias.push(d)
-      }
+      if (diaSemana !== 0 && diaSemana !== 6) dias.push(d)
     }
     return dias
   }
@@ -84,6 +124,20 @@ const Reservas = () => {
       setMensaje({ tipo: 'error', texto: 'No se pudo identificar tu usuario.' })
       return
     }
+
+    const { data: reservaExistente } = await supabase
+      .from('reservas')
+      .select('id_reserva')
+      .eq('id_usuario', idUsuario)
+      .eq('fecha_reserva', fecha)
+      .neq('estado', 'cancelada')
+      .maybeSingle()
+
+    if (reservaExistente) {
+      setMensaje({ tipo: 'error', texto: 'Ya tienes una reserva para ese día.' })
+      return
+    }
+
     setLoading(true)
     setMensaje(null)
 
@@ -121,6 +175,7 @@ const Reservas = () => {
       setFecha('')
       setHora('')
       setCantidad(1)
+      setPlatos([])
     }
   }
 
@@ -135,58 +190,6 @@ const Reservas = () => {
         <div className="res-section">
           <div className="res-section-head">
             <span className="res-step">1</span>
-            <h2 className="res-section-title">Elige tu plato</h2>
-          </div>
-          <input
-            className="res-buscador"
-            type="text"
-            placeholder="Buscar por nombre o categoría..."
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-          />
-          <div className="res-platos-lista">
-            {platosFiltrados.map(plato => (
-              <div
-                key={plato.id_plato}
-                className={`res-plato-item ${platoSeleccionado?.id_plato === plato.id_plato ? 'seleccionado' : ''}`}
-                onClick={() => setPlatoSeleccionado(plato)}
-              >
-                {plato.imagen_url ? (
-                  <img src={plato.imagen_url} alt={plato.nombre} className="res-plato-img" />
-                ) : (
-                  <div className="res-plato-img-placeholder">🍽️</div>
-                )}
-                <div className="res-plato-info">
-                  <p className="res-plato-nombre">{plato.nombre}</p>
-                  {plato.categoria && <p className="res-plato-cat">{plato.categoria}</p>}
-                  <p className="res-plato-desc">{plato.descripcion}</p>
-                  {plato.etiquetas && (
-                    <div className="res-plato-etiquetas">
-                      {plato.etiquetas.split(',').map(tag => {
-                        const t = tag.trim()
-                        const cfg = badgeConfig[t]
-                        if (!cfg) return null
-                        return (
-                          <span key={t} className="res-plato-etiqueta" style={{ background: cfg.bg, color: cfg.color }}>
-                            {cfg.icon} {t}
-                          </span>
-                        )
-                      })}
-                    </div>
-                  )}
-                </div>
-                <div className="res-plato-precio">${plato.precio?.toLocaleString('es-CL')}</div>
-                {platoSeleccionado?.id_plato === plato.id_plato && (
-                  <div className="res-plato-check">✓</div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="res-section">
-          <div className="res-section-head">
-            <span className="res-step">2</span>
             <h2 className="res-section-title">Elige la fecha</h2>
           </div>
           <div className="res-fechas">
@@ -197,7 +200,7 @@ const Reservas = () => {
                 <button
                   key={f}
                   className={`res-fecha-btn ${fecha === f ? 'activo' : ''}`}
-                  onClick={() => setFecha(f)}
+                  onClick={() => handleFecha(f)}
                 >
                   <span className="res-fecha-dia">{formatDia(d)}</span>
                   <span className="res-fecha-num">{d.getDate()}</span>
@@ -205,6 +208,68 @@ const Reservas = () => {
                 </button>
               )
             })}
+          </div>
+        </div>
+
+        <div className="res-section">
+          <div className="res-section-head">
+            <span className="res-step">2</span>
+            <h2 className="res-section-title">Elige tu plato</h2>
+          </div>
+          {fecha && (
+            <input
+              className="res-buscador"
+              type="text"
+              placeholder="Buscar por nombre o categoría..."
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+            />
+          )}
+          <div className="res-platos-lista">
+            {!fecha ? (
+              <p className="res-sin-menu">Selecciona una fecha para ver el menú disponible.</p>
+            ) : sinMenu ? (
+              <p className="res-sin-menu">No hay menú disponible para este día.</p>
+            ) : platos.length === 0 ? (
+              <p className="res-sin-menu">Cargando platos...</p>
+            ) : (
+              platosFiltrados.map(plato => (
+                <div
+                  key={plato.id_plato}
+                  className={`res-plato-item ${platoSeleccionado?.id_plato === plato.id_plato ? 'seleccionado' : ''}`}
+                  onClick={() => setPlatoSeleccionado(plato)}
+                >
+                  {plato.imagen_url ? (
+                    <img src={plato.imagen_url} alt={plato.nombre} className="res-plato-img" />
+                  ) : (
+                    <div className="res-plato-img-placeholder">🍽️</div>
+                  )}
+                  <div className="res-plato-info">
+                    <p className="res-plato-nombre">{plato.nombre}</p>
+                    {plato.categoria && <p className="res-plato-cat">{plato.categoria}</p>}
+                    <p className="res-plato-desc">{plato.descripcion}</p>
+                    {plato.etiquetas && (
+                      <div className="res-plato-etiquetas">
+                        {plato.etiquetas.split(',').map(tag => {
+                          const t = tag.trim()
+                          const cfg = badgeConfig[t]
+                          if (!cfg) return null
+                          return (
+                            <span key={t} className="res-plato-etiqueta" style={{ background: cfg.bg, color: cfg.color }}>
+                              {cfg.icon} {t}
+                            </span>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                  <div className="res-plato-precio">${plato.precio?.toLocaleString('es-CL')}</div>
+                  {platoSeleccionado?.id_plato === plato.id_plato && (
+                    <div className="res-plato-check">✓</div>
+                  )}
+                </div>
+              ))
+            )}
           </div>
         </div>
 
@@ -234,7 +299,7 @@ const Reservas = () => {
           <div className="res-cantidad">
             <button className="res-cantidad-btn" onClick={() => setCantidad(c => Math.max(1, c - 1))}>−</button>
             <span className="res-cantidad-num">{cantidad}</span>
-            <button className="res-cantidad-btn" onClick={() => setCantidad(c => Math.min(10, c + 1))}>+</button>
+            <button className="res-cantidad-btn" onClick={() => setCantidad(c => Math.min(3, c + 1))}>+</button>
           </div>
         </div>
 

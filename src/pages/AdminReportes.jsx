@@ -23,6 +23,9 @@ const AdminReportes = () => {
   const [filtroRango, setFiltroRango] = useState('semana')
   const [filtroFechaDesde, setFiltroFechaDesde] = useState('')
   const [filtroFechaHasta, setFiltroFechaHasta] = useState('')
+  const [filtroRangoPlatos, setFiltroRangoPlatos] = useState('semana')
+  const [filtroFechaDesdePlatos, setFiltroFechaDesdePlatos] = useState('')
+  const [filtroFechaHastaPlatos, setFiltroFechaHastaPlatos] = useState('')
 
   const getRangoFechas = () => {
     const hoy = new Date()
@@ -40,22 +43,48 @@ const AdminReportes = () => {
     }
   }
 
-  const fetchReportes = async () => {
-    const { data: dataPlatosVendidos } = await supabase
-      .from('reserva_platos')
-      .select('id_plato, cantidad, platos ( nombre )')
-
-    if (dataPlatosVendidos) {
-      const conteo = {}
-      dataPlatosVendidos.forEach(({ id_plato, cantidad, platos }) => {
-        if (!conteo[id_plato]) conteo[id_plato] = { nombre: platos?.nombre, total: 0 }
-        conteo[id_plato].total += cantidad
-      })
-      const ordenados = Object.values(conteo).sort((a, b) => b.total - a.total).slice(0, 6)
-      setPlatosMasVendidos(ordenados)
-      setTotalPlatos(dataPlatosVendidos.reduce((acc, r) => acc + r.cantidad, 0))
-    }
+  const getRangoFechasPlatos = () => {
+  const hoy = new Date()
+  const hasta = hoy.toISOString().split('T')[0]
+  if (filtroRangoPlatos === 'semana') {
+    const d = new Date(hoy)
+    d.setDate(hoy.getDate() - 7)
+    return { desde: d.toISOString().split('T')[0], hasta }
+  } else if (filtroRangoPlatos === 'mes') {
+    const d = new Date(hoy)
+    d.setDate(hoy.getDate() - 30)
+    return { desde: d.toISOString().split('T')[0], hasta }
+  } else {
+    return { desde: filtroFechaDesdePlatos, hasta: filtroFechaHastaPlatos || hasta }
   }
+}
+
+
+const fetchReportes = async () => {
+  const { desde, hasta } = getRangoFechasPlatos()
+
+  const { data: dataPlatosVendidos } = await supabase
+    .from('reserva_platos')
+    .select('id_plato, cantidad, platos(nombre), reservas(fecha_reserva)')
+
+  if (dataPlatosVendidos) {
+    const filtrados = desde && hasta
+      ? dataPlatosVendidos.filter(r => {
+          const fecha = r.reservas?.fecha_reserva
+          return fecha && fecha >= desde && fecha <= hasta
+        })
+      : dataPlatosVendidos
+
+    const conteo = {}
+    filtrados.forEach(({ id_plato, cantidad, platos }) => {
+      if (!conteo[id_plato]) conteo[id_plato] = { nombre: platos?.nombre, total: 0 }
+      conteo[id_plato].total += cantidad
+    })
+    const ordenados = Object.values(conteo).sort((a, b) => b.total - a.total).slice(0, 6)
+    setPlatosMasVendidos(ordenados)
+    setTotalPlatos(filtrados.reduce((acc, r) => acc + r.cantidad, 0))
+  }
+}
 
   const fetchReportesFiltrados = async () => {
     const { desde, hasta } = getRangoFechas()
@@ -161,6 +190,7 @@ const AdminReportes = () => {
       await fetchReportesFiltrados()
       await fetchPlatosPorDia()
       await fetchPlatosPorHora()
+      
     }
     init()
   }, [])
@@ -171,6 +201,15 @@ const AdminReportes = () => {
     }
     cargarReportesFiltrados()
   }, [filtroRango, filtroFechaDesde, filtroFechaHasta])
+
+
+  useEffect(() => {
+    const cargarReportes = async () => {
+      await fetchReportes()
+    }
+
+    void cargarReportes()
+  }, [filtroRangoPlatos, filtroFechaDesdePlatos, filtroFechaHastaPlatos])
 
   return (
     <div className="admin-layout">
@@ -245,6 +284,41 @@ const AdminReportes = () => {
           {/* Tab Platos */}
           {tabActivo === 'platos' && (
             <>
+               {/* Filtro por período */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
+                  <label className="admin-form-label" style={{ margin: 0 }}>Período:</label>
+                  <div className="admin-tabs" style={{ margin: 0 }}>
+                    {['semana', 'mes', 'personalizado'].map(r => (
+                      <button
+                        key={r}
+                        className={`admin-tab ${filtroRangoPlatos === r ? 'activo' : ''}`}
+                        onClick={() => setFiltroRangoPlatos(r)}
+                        style={{ fontSize: 12, padding: '5px 14px' }}
+                      >
+                        {r === 'semana' ? 'Última semana' : r === 'mes' ? 'Último mes' : 'Personalizado'}
+                      </button>
+                    ))}
+                  </div>
+                  {filtroRangoPlatos === 'personalizado' && (
+                    <>
+                      <input
+                        type="date"
+                        className="admin-form-input"
+                        style={{ maxWidth: 160, padding: '5px 10px' }}
+                        value={filtroFechaDesdePlatos}
+                        onChange={(e) => setFiltroFechaDesdePlatos(e.target.value)}
+                      />
+                      <span style={{ color: '#6b7280', fontSize: 13 }}>hasta</span>
+                      <input
+                        type="date"
+                        className="admin-form-input"
+                        style={{ maxWidth: 160, padding: '5px 10px' }}
+                        value={filtroFechaHastaPlatos}
+                        onChange={(e) => setFiltroFechaHastaPlatos(e.target.value)}
+                      />
+                    </>
+                  )}
+                </div>
               <div className="admin-row2">
                 <div className="admin-panel">
                   <div className="admin-panel-head">

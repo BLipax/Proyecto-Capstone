@@ -131,7 +131,7 @@ const Home = () => {
         )
       })()}
       <div className="card-buttons">
-        <button className="btn-reservar" onClick={() => navigate('/reservas')}>Reservar</button>
+        <button className="btn-reservar" onClick={() => navigate('/reservas', { state: { plato } })}>Reservar</button>
         <button className="btn-info" onClick={() => handleResena(plato)}>Deja tu reseña</button>
       </div>
     </div>
@@ -195,7 +195,7 @@ const Home = () => {
                     })()}
                     <div className="menu-dia-footer">
                       <p className="menu-dia-precio">${plato.precio?.toLocaleString('es-CL')}</p>
-                      <button className="btn-reservar" onClick={() => navigate('/reservas')}>
+                      <button className="btn-reservar" onClick={() => navigate('/reservas', { state: { plato } })}>
                         Reservar
                       </button>
                     </div>
