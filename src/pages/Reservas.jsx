@@ -103,7 +103,7 @@ const Reservas = () => {
       const d = new Date(hoy)
       d.setDate(hoy.getDate() + i)
       const diaSemana = d.getDay()
-      if (diaSemana !== 0 && diaSemana !== 6) dias.push(d)
+      if (diaSemana !== 0) dias.push(d)
     }
     return dias
   }
