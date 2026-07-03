@@ -43,14 +43,7 @@ const AdminReservas = () => {
     init()
   }, [filtroFecha, filtroEstado, filtroUsuario])
 
-  const handleCambiarEstado = async (id_reserva, estadoActual) => {
-    const siguiente = {
-      'pendiente': 'lista',
-      'lista': 'entregada',
-      'entregada': 'entregada',
-      'cancelada': 'cancelada',
-    }
-    const nuevoEstado = siguiente[estadoActual] ?? estadoActual
+  const cambiarEstado = async (id_reserva, nuevoEstado) => {
     await supabase.from('reservas').update({ estado: nuevoEstado }).eq('id_reserva', id_reserva)
     fetchReservas()
   }
@@ -58,15 +51,10 @@ const AdminReservas = () => {
   const getEstadoClass = (estado) => {
     if (estado === 'pendiente') return 'admin-pill admin-pill-amarillo'
     if (estado === 'lista') return 'admin-pill admin-pill-verde'
-    if (estado === 'entregada') return 'admin-pill admin-pill-gris' 
+    if (estado === 'entregada') return 'admin-pill admin-pill-gris'
     if (estado === 'cancelada') return 'admin-pill admin-pill-rojo'
+    if (estado === 'no retirada') return 'admin-pill admin-pill-rojo'
     return 'admin-pill'
-  }
-
-  const getBtnLabel = (estado) => {
-    if (estado === 'pendiente') return '→ Lista'
-    if (estado === 'lista') return '→ Entregada'
-    return null
   }
 
   return (
@@ -104,6 +92,7 @@ const AdminReservas = () => {
                   <option value="lista">Lista</option>
                   <option value="entregada">Entregada</option>
                   <option value="cancelada">Cancelada</option>
+                  <option value="no retirada">No retirada</option>
                 </select>
               </div>
               <div className="admin-form-field">
@@ -159,13 +148,30 @@ const AdminReservas = () => {
                       <span className={getEstadoClass(r.estado)}>{r.estado}</span>
                     </td>
                     <td className="admin-td-normal">
-                      {getBtnLabel(r.estado) && (
+                      {r.estado === 'pendiente' && (
                         <button
                           className="admin-btn-toggle"
-                          onClick={() => handleCambiarEstado(r.id_reserva, r.estado)}
+                          onClick={() => cambiarEstado(r.id_reserva, 'lista')}
                         >
-                          {getBtnLabel(r.estado)}
+                          → Lista
                         </button>
+                      )}
+                      {r.estado === 'lista' && (
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button
+                            className="admin-btn-toggle"
+                            onClick={() => cambiarEstado(r.id_reserva, 'entregada')}
+                          >
+                            → Entregada
+                          </button>
+                          <button
+                            className="admin-btn-toggle"
+                            style={{ background: '#fee2e2', color: '#dc2626' }}
+                            onClick={() => cambiarEstado(r.id_reserva, 'no retirada')}
+                          >
+                            → No retirada
+                          </button>
+                        </div>
                       )}
                     </td>
                   </tr>
